@@ -8,6 +8,11 @@ from alchemy.types import Settings
 
 
 class Alchemy:
+    """
+    The Alchemy client. This class is the main entry point.
+    core  - contains the core eth json-rpc calls and Alchemy's
+    nft - namespace contains methods for Alchemy's NFT API.
+    """
     config: AlchemyConfig
     provider: AlchemyProvider
     core: AlchemyCore
@@ -21,4 +26,3 @@ class Alchemy:
 
     def isConnected(self) -> bool:
         return self.provider.isConnected()
-

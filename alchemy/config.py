@@ -7,6 +7,12 @@ DEFAULT_MAX_RETRIES = 5
 
 
 class AlchemyConfig:
+    """
+    @param {string} [settings.apiKey] - The API key to use for Alchemy
+    @param {Network} [settings.network] - The network to use for Alchemy
+    @param {number} [settings.maxRetries] - The maximum number of retries to attempt
+    @param {url} [settings.maxRetries] - The provided connection url
+    """
     api_key: str
     network: Network
     max_retries: int
