@@ -3,7 +3,7 @@ from typing import Any
 
 import backoff as backoff
 import requests
-from requests import HTTPError
+from requests import HTTPError, Response
 
 from alchemy.nft.types import GetNftsAlchemyParams
 
@@ -16,7 +16,7 @@ def jitter(value: float) -> float:
     return min(value + (random.random() - 0.5) * value, DEFAULT_BACKOFF_MAX_DELAY_MS)
 
 
-def get_headers(method_name):
+def get_headers(method_name: str) -> dict:
     headers = {
         'Alchemy-Ethers-Sdk-Method': method_name,
         'Alchemy-Ethers-Sdk-Version': '0.0.1'
@@ -35,7 +35,7 @@ def send_api_request(
         method_name: str,
         params: GetNftsAlchemyParams,
         **options: Any
-):
+) -> Response:
     url = url + '/' + rest_api_name
     headers = get_headers(method_name).update(options.get('headers', {}))
     response = requests.request(
@@ -53,7 +53,7 @@ def send_api_request(
                       jitter=jitter,
                       max_tries=DEFAULT_BACKOFF_MAX_ATTEMPTS,
                       factor=DEFAULT_BACKOFF_MULTIPLIER)
-def post_request(url: str, method_name: str, request_data: bytes):
+def post_request(url: str, method_name: str, request_data: bytes) -> bytes:
     headers = get_headers(method_name)
     response = requests.post(url=url, data=request_data, headers=headers)
     response.raise_for_status()

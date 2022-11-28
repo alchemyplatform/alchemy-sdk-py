@@ -30,7 +30,8 @@ class AlchemyNFT:
         return self._url
 
     def getNftsForOwner(
-            self, owner: str,
+            self,
+            owner: str,
             src_method: str = 'getNftsForOwner',
             **options: Any,  # Union[GetNftsForOwnerOptions, GetBaseNftsForOwnerOptions]
     ) -> Union[OwnedNftsResponse, OwnedBaseNftsResponse]:

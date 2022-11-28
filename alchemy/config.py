@@ -18,7 +18,7 @@ class AlchemyConfig:
         self.max_retries = settings.get('maxRetries', DEFAULT_MAX_RETRIES)
         self.url = settings.get('url')
 
-    def get_request_url(self, api_type: AlchemyApiType):
+    def get_request_url(self, api_type: AlchemyApiType) -> str:
         if self.url:
             return self.url
         elif api_type == AlchemyApiType.NFT:

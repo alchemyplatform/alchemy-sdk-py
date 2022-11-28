@@ -17,7 +17,7 @@ class AlchemyProvider(JSONBaseProvider):
     network = None
     connection = None
 
-    def __init__(self, config: AlchemyConfig):
+    def __init__(self, config: AlchemyConfig) -> None:
         self.api_key = self.get_api_key(config.api_key)
         self.network = self.get_alchemy_network(config.network)
         self.connection = self.get_alchemy_connection_info('http')
@@ -30,7 +30,7 @@ class AlchemyProvider(JSONBaseProvider):
         super().__init__()
 
     @staticmethod
-    def get_api_key(api_key):
+    def get_api_key(api_key: str) -> str:
         if api_key is None:
             return DEFAULT_ALCHEMY_API_KEY
         if api_key and not isinstance(api_key, str):
@@ -38,16 +38,17 @@ class AlchemyProvider(JSONBaseProvider):
         return api_key
 
     @staticmethod
-    def get_alchemy_network(network):
+    def get_alchemy_network(network: Network) -> Network:
         if network is None:
-            return
+            return DEFAULT_NETWORK
         networks = [n.value for n in Network]
         if network not in networks:
             raise AlchemyError(
-                f"Invalid network '{network}' provided. Network must be one of: {', '.join(networks)}")
+                f"Invalid network '{network}' provided. "
+                f"Network must be one of: {', '.join(networks)}")
         return network
 
-    def get_alchemy_connection_info(self, connection_type):
+    def get_alchemy_connection_info(self, connection_type: str) -> dict:
         if connection_type == 'http':
             url = f'https://{self.network}.g.alchemy.com/v2/{self.api_key}'
         else:
