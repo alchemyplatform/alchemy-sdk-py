@@ -8,9 +8,9 @@ if __name__ == '__main__':
     }
     alchemy = Alchemy(conf)
 
-    print(alchemy.isConnected())
-    print(alchemy.core.get_balance("0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57", "latest"))
-    print(alchemy.core.get_block('latest'))
+    print(alchemy.isConnected(), '\n')
+    print(alchemy.core.get_balance("0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57", "latest"), '\n')
+    print(alchemy.core.get_block('latest'), '\n')
     print(alchemy.nft.getNftsForOwner("0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57", omitMetadata=True))
 
 

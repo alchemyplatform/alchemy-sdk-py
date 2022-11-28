@@ -41,11 +41,11 @@ class AlchemyProvider(JSONBaseProvider):
     def get_alchemy_network(network: Network) -> Network:
         if network is None:
             return DEFAULT_NETWORK
-        networks = [n.value for n in Network]
+        networks = [n for n in Network]
         if network not in networks:
             raise AlchemyError(
                 f"Invalid network '{network}' provided. "
-                f"Network must be one of: {', '.join(networks)}")
+                f"Network must be one of: {networks}")
         return network
 
     def get_alchemy_connection_info(self, connection_type: str) -> dict:
