@@ -13,5 +13,25 @@ if __name__ == '__main__':
     print(alchemy.core.get_block('latest'), '\n')
     print(alchemy.nft.getNftsForOwner("0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57", omitMetadata=True))
 
+    res = alchemy.core.getTokenBalances(
+        '0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57',
+        ['0xdAC17F958D2ee523a2206206994597C13D831ec7']
+    )
+    print(res, '\n')
+    res = alchemy.core.getTokenBalances(
+        '0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57')
+    print(res, '\n')
+    res = alchemy.core.getAssetTransfers({
+        "fromBlock": "0x0",
+        "toBlock": "latest",
+        "withMetadata": False,
+        "excludeZeroValue": True,
+        "maxCount": "0x3e8"
+    })
+    print(res, '\n')
+    res = alchemy.core.getTokenMetadata('0xdAC17F958D2ee523a2206206994597C13D831ec7')
+    print(res, '\n')
+
+
 
 

@@ -11,7 +11,7 @@ from alchemy.nft.types import (
     OwnedBaseNftsResponse,
     GetNftsForOwnerOptions,
     GetBaseNftsForOwnerOptions,
-    GetNftsAlchemyParams
+    GetNftsAlchemyParams,
 )
 from alchemy.provider import AlchemyProvider
 
@@ -30,10 +30,10 @@ class AlchemyNFT:
         return self._url
 
     def getNftsForOwner(
-            self,
-            owner: str,
-            src_method: str = 'getNftsForOwner',
-            **options: Any,  # Union[GetNftsForOwnerOptions, GetBaseNftsForOwnerOptions]
+        self,
+        owner: str,
+        src_method: str = 'getNftsForOwner',
+        **options: Any,  # Union[GetNftsForOwnerOptions, GetBaseNftsForOwnerOptions]
     ) -> Union[OwnedNftsResponse, OwnedBaseNftsResponse]:
 
         with_metadata = True
@@ -54,7 +54,7 @@ class AlchemyNFT:
                 url=self.url,
                 rest_api_name='getNFTs',
                 method_name=src_method,
-                params=params
+                params=params,
             ).json()
         except HTTPError as err:
             raise AlchemyError(str(err)) from err

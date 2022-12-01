@@ -21,5 +21,3 @@ class AlchemyApiType(enum.Enum):
     BASE = 0
     NFT = 1
     WEBHOOK = 2
-
-

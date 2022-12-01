@@ -13,6 +13,7 @@ class Alchemy:
     core  - contains the core eth json-rpc calls and Alchemy's
     nft - namespace contains methods for Alchemy's NFT API.
     """
+
     config: AlchemyConfig
     provider: AlchemyProvider
     core: AlchemyCore

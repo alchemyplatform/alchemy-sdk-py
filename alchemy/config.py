@@ -13,6 +13,7 @@ class AlchemyConfig:
     @param {number} [settings.maxRetries] - The maximum number of retries to attempt
     @param {url} [settings.maxRetries] - The provided connection url
     """
+
     api_key: str
     network: Network
     max_retries: int
@@ -33,7 +34,3 @@ class AlchemyConfig:
             return f'https://{self.network}.g.alchemy.com/v2/{self.api_key}'
         else:
             raise AlchemyError(f'Wrong api_type: {api_type}')
-
-
-
-

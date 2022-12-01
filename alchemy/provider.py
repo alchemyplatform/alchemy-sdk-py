@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 from requests import HTTPError
 from web3.providers import JSONBaseProvider
 from web3.types import RPCEndpoint, RPCResponse
@@ -34,7 +34,9 @@ class AlchemyProvider(JSONBaseProvider):
         if api_key is None:
             return DEFAULT_ALCHEMY_API_KEY
         if api_key and not isinstance(api_key, str):
-            raise AlchemyError(f"Invalid apiKey '{api_key}' provided. apiKey must be a string.")
+            raise AlchemyError(
+                f"Invalid apiKey '{api_key}' provided. apiKey must be a string."
+            )
         return api_key
 
     @staticmethod
@@ -45,7 +47,8 @@ class AlchemyProvider(JSONBaseProvider):
         if network not in networks:
             raise AlchemyError(
                 f"Invalid network '{network}' provided. "
-                f"Network must be one of: {networks}")
+                f"Network must be one of: {networks}"
+            )
         return network
 
     def get_alchemy_connection_info(self, connection_type: str) -> dict:
@@ -56,16 +59,17 @@ class AlchemyProvider(JSONBaseProvider):
 
         return {'url': url}
 
-    def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
+    def make_request(
+        self, method: Union[RPCEndpoint, str], params: Any, method_name: str = None
+    ) -> RPCResponse:
         request_data = self.encode_rpc_request(method, params)
         try:
             raw_response = post_request(
                 url=self.connection['url'],
-                method_name=method,
+                method_name=method if method_name is None else method_name,
                 request_data=request_data,
             )
             response = self.decode_rpc_response(raw_response)
         except HTTPError as err:
             raise AlchemyError(str(err)) from err
         return response
-

@@ -1,5 +1,4 @@
-import enum
-from typing import TypedDict, List, Union
+from typing import TypedDict, List, Union, Literal
 from alchemy.types import AlchemyApiType
 
 __all__ = [
@@ -11,18 +10,15 @@ __all__ = [
     'GetNftsAlchemyParams',
 ]
 
-
-class NftTokenType(enum.Enum):
-    ERC721 = 'ERC721'
-    ERC1155 = 'ERC1155'
-    UNKNOWN = 'UNKNOWN'
+NftTokenType = Literal['ERC721', 'ERC1155', 'ERC1155']
+NftExcludeFilters = Literal['SPAM', 'AIRDROPS']
 
 
 class BaseNftContract(TypedDict):
     address: str
 
 
-class NftContract(TypedDict, BaseNftContract, total=False):
+class NftContract(BaseNftContract, total=False):
     tokenType: NftTokenType
     name: str
     symbol: str
@@ -34,7 +30,7 @@ class BaseNftContractField(TypedDict):
     contract: BaseNftContract
 
 
-class BaseNft(TypedDict, BaseNftContractField, total=False):
+class BaseNft(BaseNftContractField, total=False):
     tokenId: str
     tokenType: NftTokenType
 
@@ -48,7 +44,7 @@ class TokenUri(TypedDict):
     gateway: str
 
 
-class Nft(TypedDict, BaseNft, NftContractField, total=False):
+class Nft(BaseNft, NftContractField, total=False):
     title: str
     description: str
     timeLastUpdated: str
@@ -57,11 +53,11 @@ class Nft(TypedDict, BaseNft, NftContractField, total=False):
     tokenUri: TokenUri
 
 
-class OwnedNft(TypedDict, Nft, total=False):
+class OwnedNft(Nft, total=False):
     balance: int
 
 
-class OwnedBaseNft(TypedDict, BaseNft, total=False):
+class OwnedBaseNft(BaseNft, total=False):
     balance: int
 
 
@@ -75,11 +71,6 @@ class OwnedBaseNftsResponse(TypedDict, total=False):
     ownedNfts: List[OwnedBaseNft]
     pageKey: str
     totalCount: int
-
-
-class NftExcludeFilters(enum.Enum):
-    SPAM = 'SPAM'
-    AIRDROPS = 'AIRDROPS'
 
 
 class GetNftsForOwnerOptions(TypedDict, total=False):
