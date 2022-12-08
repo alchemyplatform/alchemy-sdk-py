@@ -11,7 +11,7 @@ if __name__ == '__main__':
     print(alchemy.isConnected(), '\n')
     print(alchemy.core.get_balance("0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57", "latest"), '\n')
     print(alchemy.core.get_block('latest'), '\n')
-    print(alchemy.nft.getNftsForOwner("0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57", omitMetadata=True))
+    print(alchemy.nft.get_nfts_for_owner("0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57", omitMetadata=True))
 
     res = alchemy.core.get_token_balances(
         '0x88754a0e8A4ac7E5bed2B52db42749Ba4b4Fbe57',
@@ -31,6 +31,9 @@ if __name__ == '__main__':
     print(res, '\n')
     res = alchemy.core.get_token_metadata('0xdAC17F958D2ee523a2206206994597C13D831ec7')
     print(res, '\n')
+    res = alchemy.nft.get_nft_metadata('0x5180db8F5c931aaE63c74266b211F580155ecac8', '1590')
+    print(res)
+
 
 
 

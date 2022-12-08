@@ -1,6 +1,8 @@
 import enum
-from typing import TypedDict
+from typing import TypedDict, Union, TypeVar
 
+TReq = TypeVar('TReq')
+TResp = TypeVar('TResp')
 
 class Network(enum.Enum):
     def __str__(self):
