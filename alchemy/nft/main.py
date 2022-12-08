@@ -107,7 +107,7 @@ class AlchemyNFT:
     def get_nfts_for_owner(
         self,
         owner: str,
-        options: Union[GetNftsForOwnerOptions, GetBaseNftsForOwnerOptions] = None,
+        **options: Union[GetNftsForOwnerOptions, GetBaseNftsForOwnerOptions]
     ) -> Union[OwnedNftsResponse, OwnedBaseNftsResponse]:
         if options is None:
             options = {}
