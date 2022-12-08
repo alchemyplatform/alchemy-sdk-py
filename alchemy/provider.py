@@ -56,19 +56,25 @@ class AlchemyProvider(JSONBaseProvider):
             url = f'https://{self.network}.g.alchemy.com/v2/{self.api_key}'
         else:
             url = f'wss://{self.network}.g.alchemy.com/v2/{self.api_key}'
-
         return {'url': url}
 
     def make_request(
-        self, method: Union[RPCEndpoint, str], params: Any, method_name: str = None
+        self,
+        method: Union[RPCEndpoint, str],
+        params: Any,
+        method_name: str = None,
+        headers: dict = None,
     ) -> RPCResponse:
+        if headers is None:
+            headers = {}
         request_data = self.encode_rpc_request(method, params)
+        headers = {
+            **headers,
+            'Alchemy-Ethers-Sdk-Method': method_name,
+            'Alchemy-Ethers-Sdk-Version': '0.0.1',
+        }
         try:
-            raw_response = post_request(
-                url=self.connection['url'],
-                method_name=method if method_name is None else method_name,
-                request_data=request_data,
-            )
+            raw_response = post_request(self.connection['url'], request_data, headers)
             response = self.decode_rpc_response(raw_response)
         except HTTPError as err:
             raise AlchemyError(str(err)) from err

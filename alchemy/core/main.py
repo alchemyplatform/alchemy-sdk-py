@@ -12,6 +12,8 @@ from alchemy.core.types import (
     TokenBalancesOptions,
     TokenBalancesResponse,
     ContractAddress,
+    TxReceiptsParams,
+    TxReceiptsResponse,
 )
 from alchemy.exceptions import AlchemyError
 from alchemy.provider import AlchemyProvider
@@ -31,7 +33,7 @@ class AlchemyCore(Eth):
         self.config = config
         self.provider: AlchemyProvider = web3.provider
 
-    def getTokenBalances(
+    def get_token_balances(
         self,
         address: str,
         data: Union[List[ContractAddress], TokenBalancesOptions] = None,
@@ -69,7 +71,7 @@ class AlchemyCore(Eth):
             )
             return response.get('result')
 
-    def getTokenMetadata(self, address: str) -> TokenMetadataResponse:
+    def get_token_metadata(self, address: str) -> TokenMetadataResponse:
         response = self.provider.make_request(
             method='alchemy_getTokenMetadata',
             params=[address],
@@ -77,7 +79,9 @@ class AlchemyCore(Eth):
         )
         return response.get('result')
 
-    def getAssetTransfers(self, params: AssetTransfersParams) -> AssetTransfersResponse:
+    def get_asset_transfers(
+        self, params: AssetTransfersParams
+    ) -> AssetTransfersResponse:
         if params.get('fromAddress'):
             validate_address(params['fromAddress'])  # write alchemy validation func
         if params.get('toAddress'):
@@ -100,5 +104,19 @@ class AlchemyCore(Eth):
             method='alchemy_getAssetTransfers',
             params=[{**params, **format_params}],
             method_name='getAssetTransfers',
+        )
+        return response.get('result')
+
+    def get_transaction_receipts(self, params: TxReceiptsParams) -> TxReceiptsResponse:
+        response = self.provider.make_request(
+            method='alchemy_getTransactionReceipts',
+            params=[params],
+            method_name='getTransactionReceipts',
+        )
+        return response.get('result')
+
+    def send(self, method: str, params: Any, headers: dict = None) -> Any:
+        response = self.provider.make_request(
+            method=method, params=params, method_name='send', headers=headers
         )
         return response.get('result')

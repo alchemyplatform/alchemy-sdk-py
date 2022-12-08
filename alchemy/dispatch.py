@@ -57,8 +57,7 @@ def send_api_request(
     max_tries=DEFAULT_BACKOFF_MAX_ATTEMPTS,
     factor=DEFAULT_BACKOFF_MULTIPLIER,
 )
-def post_request(url: str, method_name: str, request_data: bytes) -> bytes:
-    headers = get_headers(method_name)
-    response = requests.post(url=url, data=request_data, headers=headers)
+def post_request(url: str, request_data: bytes, headers: dict) -> bytes:
+    response = requests.post(url, request_data, headers=headers)
     response.raise_for_status()
     return response.content

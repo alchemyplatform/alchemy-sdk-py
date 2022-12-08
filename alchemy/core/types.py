@@ -1,5 +1,5 @@
-from typing import TypedDict, List, Union, Optional, Sequence, Literal, NewType
-
+from typing import TypedDict, List, Union, Optional, Literal, NewType
+from web3.types import HexBytes, BlockNumber, TxReceipt
 from typing_extensions import NotRequired
 
 
@@ -10,6 +10,8 @@ __all__ = [
     'TokenBalancesOptions',
     'TokenBalancesResponse',
     'ContractAddress',
+    'TxReceiptsParams',
+    'TxReceiptsResponse',
 ]
 
 AssetTransfersCategory = Literal[
@@ -97,3 +99,18 @@ class TokenBalancesResponse(TypedDict):
     address: str
     tokenBalances: List[TokenBalance]
     pageKey: NotRequired[bool]
+
+
+class TxReceiptsBlockNumber(TypedDict):
+    blockHash: HexBytes
+
+
+class TxReceiptsBlockHash(TypedDict):
+    blockNumber: BlockNumber
+
+
+TxReceiptsParams = Union[TxReceiptsBlockNumber, TxReceiptsBlockHash]
+
+
+class TxReceiptsResponse(TypedDict):
+    receipts: Optional[List[TxReceipt]]
