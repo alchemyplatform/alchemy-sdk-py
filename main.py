@@ -32,7 +32,9 @@ if __name__ == '__main__':
     res = alchemy.core.get_token_metadata('0xdAC17F958D2ee523a2206206994597C13D831ec7')
     print(res, '\n')
     res = alchemy.nft.get_nft_metadata('0x5180db8F5c931aaE63c74266b211F580155ecac8', '1590')
-    print(res)
+    print(res, '\n')
+    res = alchemy.nft.get_contract_metadata('0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D')
+    print(res, '\n')
 
 
 

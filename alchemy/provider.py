@@ -21,8 +21,7 @@ class AlchemyProvider(JSONBaseProvider):
         self.api_key = self.get_api_key(config.api_key)
         self.network = self.get_alchemy_network(config.network)
         self.connection = self.get_alchemy_connection_info('http')
-
-        # self.max_retries = config.max_retries
+        self.max_retries = config.max_retries
 
         if config.url:
             self.connection['url'] = config.url
@@ -64,17 +63,22 @@ class AlchemyProvider(JSONBaseProvider):
         params: Any,
         method_name: str = None,
         headers: dict = None,
+        **options: Any,
     ) -> RPCResponse:
         if headers is None:
             headers = {}
+        options['max_retries'] = self.max_retries
+
         request_data = self.encode_rpc_request(method, params)
         headers = {
             **headers,
             'Alchemy-Ethers-Sdk-Method': method_name,
-            'Alchemy-Ethers-Sdk-Version': '0.0.1',
+            'Alchemy-Ethers-Sdk-Version': '0.0.1',  # TODO: add library version
         }
         try:
-            raw_response = post_request(self.connection['url'], request_data, headers)
+            raw_response = post_request(
+                self.connection['url'], request_data, headers, **options
+            )
             response = self.decode_rpc_response(raw_response)
         except HTTPError as err:
             raise AlchemyError(str(err)) from err

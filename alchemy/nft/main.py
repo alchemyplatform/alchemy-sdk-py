@@ -16,8 +16,11 @@ from alchemy.nft.types import (
     GetNftsForOwnerOptions,
     GetBaseNftsForOwnerOptions,
     GetNftsAlchemyParams,
+    NftContract,
+    GetContractMetadataParams,
+    RawNftContract,
 )
-from alchemy.nft.utils import get_nft_from_raw
+from alchemy.nft.utils import get_nft_from_raw, get_nft_contract_from_raw
 from alchemy.provider import AlchemyProvider
 
 
@@ -42,19 +45,19 @@ class AlchemyNFT:
         token_uri_timeout: int,
         src_method: str = 'getNftMetadata',
     ) -> Nft:
-        params: GetNftMetadataParams = {
-            'contractAddress': contract_address,
-            'tokenId': str(token_id),  # check type
-            'tokenType': token_type,
-            'tokenUriTimeoutInMs': token_uri_timeout,
-        }
+        params = GetNftMetadataParams(
+            contractAddress=contract_address,
+            tokenId=str(token_id),  # check type
+            tokenType=token_type,
+            tokenUriTimeoutInMs=token_uri_timeout,
+        )
         try:
             response = api_request(
                 url=self.url,
-                max_tries=self.config.max_retries,
                 rest_api_name='getNFTMetadata',
                 method_name=src_method,
                 params=params,
+                max_retries=self.config.max_retries,
             )
         except HTTPError as err:
             raise AlchemyError(str(err)) from err
@@ -83,21 +86,19 @@ class AlchemyNFT:
             with_metadata = False
 
         filters = options.pop('excludeFilters', None)
-        params: GetNftsAlchemyParams = {
-            'owner': owner,
-            'withMetadata': with_metadata,
-            **options,
-        }
+        params = GetNftsAlchemyParams(
+            owner=owner, withMetadata=with_metadata, **options
+        )
         if filters:
             params['filters'] = filters
 
         try:
             response = api_request(
                 url=self.url,
-                max_tries=self.config.max_retries,
                 rest_api_name='getNFTs',
                 method_name=src_method,
                 params=params,
+                max_retries=self.config.max_retries,
             )
         except HTTPError as err:
             raise AlchemyError(str(err)) from err
@@ -111,3 +112,22 @@ class AlchemyNFT:
         if options is None:
             options = {}
         return self._get_nfts_for_owner(owner, options)
+
+    def _get_contract_metadata(
+        self, contract_address: str, src_method='getContractMetadata'
+    ) -> NftContract:
+        params = GetContractMetadataParams(contractAddress=contract_address)
+        try:
+            response: RawNftContract = api_request(
+                url=self.url,
+                rest_api_name='getContractMetadata',
+                method_name=src_method,
+                params=params,
+                max_retries=self.config.max_retries,
+            )
+        except HTTPError as err:
+            raise AlchemyError(str(err)) from err
+        return get_nft_contract_from_raw(response)
+
+    def get_contract_metadata(self, contract_address: str) -> NftContract:
+        return self._get_contract_metadata(contract_address)

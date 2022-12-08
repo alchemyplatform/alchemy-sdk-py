@@ -20,7 +20,12 @@ __all__ = [
     'GetNftsAlchemyParams',
     'GetNftMetadataParams',
     'RawNft',
-    'TokenUri'
+    'TokenUri',
+    'NftContract',
+    'GetContractMetadataParams',
+    'RawNftContract',
+    'OpenSeaSafelistRequestStatus',
+    'OpenSeaCollectionMetadata',
 ]
 
 # NftTokenType = Literal['ERC721', 'ERC1155', 'UNKNOWN']
@@ -33,9 +38,23 @@ NftSpamClassification = Literal[
     'MostlyHoneyPotOwners',
     'OwnedByMostHoneyPots',
 ]
-OpenSeaSafelistRequestStatus = Literal[
-    'verified', 'approved', 'requested', 'not_requested'
-]
+# OpenSeaSafelistRequestStatus = Literal[
+#     'verified', 'approved', 'requested', 'not_requested'
+# ]
+
+
+class OpenSeaSafelistRequestStatus(enum.Enum):
+    VERIFIED = 'verified'
+    APPROVED = 'approved'
+    REQUESTED = 'requested'
+    NOT_REQUESTED = 'not_requested'
+
+    @classmethod
+    def return_value(cls, value):
+        try:
+            return cls(value).value
+        except ValueError:
+            return None
 
 
 class NftTokenType(enum.Enum):
@@ -64,7 +83,7 @@ class BaseNftContract(TypedDict):
 
 
 class OpenSeaCollectionMetadata(TypedDict, total=False):
-    floorPrice: int
+    floorPrice: float
     collectionName: str
     safelistRequestStatus: Required[OpenSeaSafelistRequestStatus]
     imageUrl: str
@@ -193,7 +212,7 @@ class RawBaseNft(TypedDict):
 
 
 class RawOpenSeaCollectionMetadata(TypedDict, total=False):
-    floorPrice: int
+    floorPrice: float
     collectionName: str
     safelistRequestStatus: str
     imageUrl: str
@@ -232,3 +251,7 @@ class RawNft(RawBaseNft, total=False):
 class RawNftContract(TypedDict):
     address: str
     contractMetadata: RawNftContractMetadata
+
+
+class GetContractMetadataParams(TypedDict):
+    contractAddress: str
