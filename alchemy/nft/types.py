@@ -1,32 +1,11 @@
 import enum
 from typing import TypedDict, List, Union, Literal, Any, Optional
 
+from alchemy.exceptions import AlchemyError
+from alchemy.types import HexAddress
+
 from typing_extensions import NotRequired, Required
 
-from alchemy.types import AlchemyApiType
-
-__all__ = [
-    'List',
-    'Union',
-    'Optional',
-    'AlchemyApiType',
-    'Nft',
-    'NftTokenType',
-    'TokenID',
-    'OwnedNftsResponse',
-    'OwnedBaseNftsResponse',
-    'GetNftsForOwnerOptions',
-    'GetBaseNftsForOwnerOptions',
-    'GetNftsAlchemyParams',
-    'GetNftMetadataParams',
-    'RawNft',
-    'TokenUri',
-    'NftContract',
-    'GetContractMetadataParams',
-    'RawNftContract',
-    'OpenSeaSafelistRequestStatus',
-    'OpenSeaCollectionMetadata',
-]
 
 # NftTokenType = Literal['ERC721', 'ERC1155', 'UNKNOWN']
 NftExcludeFilters = Literal['SPAM', 'AIRDROPS']
@@ -71,7 +50,7 @@ class NftTokenType(enum.Enum):
 
 
 class GetNftMetadataParams(TypedDict, total=False):
-    contractAddress: Required[str]
+    contractAddress: Required[HexAddress]
     tokenId: Required[str]
     tokenType: NftTokenType
     refreshCache: bool
@@ -79,7 +58,7 @@ class GetNftMetadataParams(TypedDict, total=False):
 
 
 class BaseNftContract(TypedDict):
-    address: str
+    address: HexAddress
 
 
 class OpenSeaCollectionMetadata(TypedDict, total=False):
@@ -131,7 +110,7 @@ class Media(TypedDict, total=False):
 
 
 class SpamInfo(TypedDict):
-    isSpam: Union[str, bool]
+    isSpam: bool
     classifications: List[NftSpamClassification]
 
 
@@ -171,7 +150,7 @@ class OwnedBaseNftsResponse(TypedDict):
 
 class GetNftsForOwnerOptions(TypedDict, total=False):
     pageKey: str
-    contractAddresses: List[str]
+    contractAddresses: List[HexAddress]
     excludeFilters: List[NftExcludeFilters]
     pageSize: int
     omitMetadata: bool
@@ -180,7 +159,7 @@ class GetNftsForOwnerOptions(TypedDict, total=False):
 
 class GetBaseNftsForOwnerOptions(TypedDict, total=False):
     pageKey: str
-    contractAddresses: List[str]
+    contractAddresses: List[HexAddress]
     excludeFilters: List[NftExcludeFilters]
     pageSize: int
     omitMetadata: Required[Literal[True]]
@@ -190,11 +169,38 @@ class GetBaseNftsForOwnerOptions(TypedDict, total=False):
 class GetNftsAlchemyParams(TypedDict, total=False):
     owner: Required[str]
     pageKey: str
-    contractAddresses: List[str]
+    contractAddresses: List[HexAddress]
     filters: List[str]
     pageSize: int
     withMetadata: Required[bool]
     tokenUriTimeoutInMs: int
+
+
+class GetContractMetadataParams(TypedDict):
+    contractAddress: HexAddress
+
+
+class GetNftsForContractOptions(TypedDict, total=False):
+    pageKey: str
+    omitMetadata: bool
+    pageSize: int
+    tokenUriTimeoutInMs: int
+
+
+class GetBaseNftsForContractOptions(TypedDict, total=False):
+    pageKey: str
+    omitMetadata: Required[Literal[False]]
+    pageSize: int
+
+
+class NftContractNftsResponse(TypedDict):
+    nfts: List[Nft]
+    pageKey: NotRequired[str]
+
+
+class NftContractBaseNftsResponse(TypedDict):
+    nfts: List[BaseNft]
+    pageKey: NotRequired[str]
 
 
 class RawNftTokenMetadata(TypedDict):
@@ -231,9 +237,90 @@ class RawNftContractMetadata(TypedDict, total=False):
     openSea: RawOpenSeaCollectionMetadata
 
 
-# class RawSpamInfo(TypedDict):
-#     isSpam: str
-#     classifications: List[NftSpamClassification]
+class GetNftsForContractAlchemyParams(TypedDict, total=False):
+    contractAddress: Required[HexAddress]
+    startToken: str
+    withMetadata: Required[bool]
+    limit: int
+    tokenUriTimeoutInMs: int
+
+
+class GetOwnersForNftResponse(TypedDict):
+    owners: List[str]
+
+
+class GetOwnersForContractOptions(TypedDict, total=False):
+    withTokenBalances: bool
+    block: str
+    pageKey: str
+
+
+class GetOwnersForContractResponse(TypedDict):
+    owners: List[str]
+
+
+class NftContractTokenBalance(TypedDict):
+    tokenId: str
+    balance: Union[int, float]
+
+
+class NftContractOwner(TypedDict):
+    ownerAddress: HexAddress
+    tokenBalances: List[NftContractTokenBalance]
+
+
+class GetOwnersForContractWithTokenBalancesResponse(TypedDict):
+    owners: List[NftContractOwner]
+    pageKey: NotRequired[str]
+
+
+class RefreshState(enum.Enum):
+    DOES_NOT_EXIST = 'does_not_exist'
+    ALREADY_QUEUED = 'already_queued'
+    IN_PROGRESS = 'in_progress'
+    FINISHED = 'finished'
+    QUEUED = 'queued'
+    QUEUE_FAILED = 'queue_failed'
+
+    @classmethod
+    def return_value(cls, value):
+        try:
+            return cls(value).value
+        except ValueError:
+            raise AlchemyError(f'Unknown reingestion state: {value}')
+
+
+class RefreshContractResult(TypedDict):
+    contractAddress: HexAddress
+    refreshState: RefreshState
+    progress: Optional[str]
+
+
+class FloorPriceMarketplace(TypedDict):
+    floorPrice: Union[int, float]
+    priceCurrency: str
+    collectionUrl: str
+    retrievedAt: str
+
+
+class FloorPriceError(TypedDict):
+    error: str
+
+
+class GetFloorPriceResponse(TypedDict):
+    openSea: Union[FloorPriceMarketplace, FloorPriceError]
+    looksRare: Union[FloorPriceMarketplace, FloorPriceError]
+
+
+class NftAttributeRarity(TypedDict):
+    value: str
+    traitType: str
+    prevalence: int
+
+
+class RawSpamInfo(TypedDict):
+    isSpam: str
+    classifications: List[NftSpamClassification]
 
 
 class RawNft(RawBaseNft, total=False):
@@ -245,13 +332,35 @@ class RawNft(RawBaseNft, total=False):
     timeLastUpdated: Required[str]
     error: str
     contractMetadata: RawNftContractMetadata
-    spamInfo: SpamInfo
+    spamInfo: RawSpamInfo
 
 
 class RawNftContract(TypedDict):
-    address: str
+    address: HexAddress
     contractMetadata: RawNftContractMetadata
 
 
-class GetContractMetadataParams(TypedDict):
+class RawContractBaseNft(TypedDict):
+    id: RawNftId
+
+
+class RawGetNftsForContractResponse(TypedDict):
+    nfts: List[RawContractBaseNft]
+    nextToken: NotRequired[str]
+
+
+class RawGetBaseNftsForContractResponse(TypedDict):
+    nfts: List[RawNft]
+    nextToken: NotRequired[str]
+
+
+class RawReingestContractResponse(TypedDict):
     contractAddress: str
+    reingestionState: str
+    progress: Optional[str]
+
+
+class RawNftAttributeRarity(TypedDict):
+    value: str
+    trait_type: str
+    prevalence: int

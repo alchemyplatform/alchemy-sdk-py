@@ -5,6 +5,7 @@ import backoff as backoff
 import requests
 from requests import HTTPError
 
+from alchemy.exceptions import AlchemyError
 from alchemy.types import TReq, TResp
 
 DEFAULT_BACKOFF_MULTIPLIER = 1.5
@@ -16,10 +17,7 @@ def jitter(value: float) -> float:
     return min(value + (random.random() - 0.5) * value, DEFAULT_BACKOFF_MAX_DELAY_MS)
 
 
-def api_request(
-    url: str, rest_api_name: str, method_name: str, params: TReq, **options: Any
-) -> TResp:
-    url = url + '/' + rest_api_name
+def api_request(url: str, method_name: str, params: TReq, **options: Any) -> TResp:
     headers = {
         **options.get('headers', {}),
         'Alchemy-Ethers-Sdk-Method': method_name,
@@ -42,8 +40,11 @@ def api_request(
         )
         response.raise_for_status()
         return response.json()
-
-    return do_request(options.get('rest_method', 'GET'))
+    try:
+        result = do_request(options.get('rest_method', 'GET'))
+    except HTTPError as err:
+        raise AlchemyError(str(err)) from err
+    return result
 
 
 def post_request(url: str, request_data: bytes, headers: dict, **options: Any) -> bytes:

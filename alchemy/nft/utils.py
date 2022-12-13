@@ -1,3 +1,5 @@
+from typing import Union
+from alchemy.types import HexAddress
 from alchemy.exceptions import AlchemyError
 from alchemy.nft.types import (
     RawNft,
@@ -10,6 +12,10 @@ from alchemy.nft.types import (
     RawNftContract,
     OpenSeaSafelistRequestStatus,
     OpenSeaCollectionMetadata,
+    RawContractBaseNft,
+    BaseNft,
+    SpamInfo,
+    RawBaseNft,
 )
 
 
@@ -30,6 +36,11 @@ def parse_nft_token_uri_list(arr: Optional[List[TokenUri]]) -> Optional[List[Tok
     return [parse_nft_token_uri(uri) for uri in arr]
 
 
+def parse_nft_token_id(token_id):
+    # TODO: understand what type is token id and format to string
+    return str(token_id)
+
+
 def parse_safelist_status(status):
     if status is not None:
         return OpenSeaSafelistRequestStatus.return_value(status.lower())
@@ -38,11 +49,13 @@ def parse_safelist_status(status):
 
 def get_nft_from_raw(raw_nft: RawNft) -> Nft:
     try:
-        raw_token_type = raw_nft['id'].get('tokenMetadata', {}).get('tokenType', '')
-        token_type = parse_nft_token_type(raw_token_type)
-        spam_info = raw_nft.get('spamInfo')
-        if spam_info is not None:
-            spam_info['isSpam'] = bool(spam_info['isSpam'])
+        token_type = parse_nft_token_type(
+            raw_nft['id'].get('tokenMetadata', {}).get('tokenType', '')
+        )
+        spam_info: SpamInfo = {}
+        if raw_nft.get('spamInfo'):
+            spam_info['isSpam'] = bool(raw_nft['spamInfo']['isSpam'])
+            spam_info['classifications'] = raw_nft['spamInfo']['classifications']
 
         contract = NftContract(
             address=raw_nft['contract']['address'],
@@ -54,7 +67,7 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
 
         return Nft(
             contract=contract,
-            tokenId=str(raw_nft['id']['tokenId']),
+            tokenId=parse_nft_token_id(raw_nft['id']['tokenId']),
             tokenType=token_type,
             title=raw_nft['title'],
             description=raw_nft.get('description', ''),
@@ -67,6 +80,21 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
         )
     except Exception as e:
         raise AlchemyError(f'Error parsing the NFT response: {e}')
+
+
+def get_base_nft_from_raw(
+    raw_base_nft: Union[RawBaseNft, RawContractBaseNft],
+    contract_address: HexAddress = None,
+) -> BaseNft:
+    return BaseNft(
+        contract={'address': contract_address}
+        if contract_address
+        else raw_base_nft['contract'],
+        tokenId=parse_nft_token_id(raw_base_nft['id']['tokenId']),
+        tokenType=parse_nft_token_type(
+            raw_base_nft['id'].get('tokenMetadata', {}).get('tokenType', '')
+        ),
+    )
 
 
 def get_nft_contract_from_raw(raw_nft_contract: RawNftContract) -> NftContract:
@@ -99,3 +127,16 @@ def get_nft_contract_from_raw(raw_nft_contract: RawNftContract) -> NftContract:
         contract['openSea'] = opensea_metadata
 
     return contract
+
+
+def is_nft_with_metadata(nft: Union[RawBaseNft, RawContractBaseNft, RawNft]):
+    return True if nft.get('title') else False
+
+
+def parse_raw_nfts(
+    owned_nft: Union[RawContractBaseNft, RawNft], contract_address: HexAddress
+) -> Union[Nft, BaseNft]:
+    if is_nft_with_metadata(owned_nft):
+        return get_nft_from_raw(owned_nft)
+    else:
+        return get_base_nft_from_raw(owned_nft, contract_address)

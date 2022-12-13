@@ -1,4 +1,4 @@
-from typing import Union, Any, List
+from typing import Union, Any, List, NoReturn
 
 from web3._utils.validation import validate_address
 from web3.eth import Eth
@@ -6,6 +6,7 @@ from web3 import Web3
 
 from alchemy.config import AlchemyConfig
 from alchemy.core.types import (
+    HexAddress,
     TokenMetadataResponse,
     AssetTransfersResponse,
     AssetTransfersParams,
@@ -71,7 +72,7 @@ class AlchemyCore(Eth):
             )
             return response.get('result')
 
-    def get_token_metadata(self, address: str) -> TokenMetadataResponse:
+    def get_token_metadata(self, address: HexAddress) -> TokenMetadataResponse:
         response = self.provider.make_request(
             method='alchemy_getTokenMetadata',
             params=[address],

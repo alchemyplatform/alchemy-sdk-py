@@ -1,9 +1,10 @@
 from typing import TypedDict, List, Union, Optional, Literal, NewType
-from web3.types import HexBytes, BlockNumber, TxReceipt
-from typing_extensions import NotRequired
-
+from web3.types import HexBytes, BlockNumber, TxReceipt, BlockIdentifier, ENS
+from typing_extensions import NotRequired, Required
+from alchemy.types import HexAddress
 
 __all__ = [
+    'HexAddress',
     'TokenMetadataResponse',
     'AssetTransfersResponse',
     'AssetTransfersParams',
@@ -36,7 +37,7 @@ class ERC1155Metadata(TypedDict):
 
 class RawContract(TypedDict):
     value: Optional[str]
-    address: Optional[str]
+    address: Optional[HexAddress]
     decimal: Optional[str]
 
 
@@ -48,11 +49,11 @@ class AssetTransfersMetadata(TypedDict):
 AssetTransfersResult = TypedDict(
     'AssetTransfersResult',
     {
-        'from': str,
+        'from': HexAddress,
         'uniqueId': str,
         'category': AssetTransfersCategory,
         'blockNum': str,
-        'to': Optional[str],
+        'to': Optional[HexAddress],
         'value': Optional[int],
         'erc721TokenId': Optional[str],
         'erc1155Metadata': Optional[List[ERC1155Metadata]],
@@ -70,18 +71,18 @@ class AssetTransfersResponse(TypedDict):
     pageKey: NotRequired[str]
 
 
-class AssetTransfersParams(TypedDict):
-    fromBlock: NotRequired[str]
-    toBlock: NotRequired[str]
-    order: NotRequired[SortingOrder]
-    fromAddress: NotRequired[str]
-    toAddress: NotRequired[str]
-    contractAddresses: NotRequired[List[str]]
-    excludeZeroValue: NotRequired[bool]
-    category: List[AssetTransfersCategory]
-    maxCount: NotRequired[int]
-    pageKey: NotRequired[str]
-    withMetadata: NotRequired[bool]
+class AssetTransfersParams(TypedDict, total=False):
+    fromBlock: BlockIdentifier
+    toBlock: BlockIdentifier
+    order: SortingOrder
+    fromAddress: Union[HexAddress, ENS]
+    toAddress: Union[HexAddress, ENS]
+    contractAddresses: List[HexAddress]
+    excludeZeroValue: bool
+    category: Required[List[AssetTransfersCategory]]
+    maxCount: int
+    pageKey: str
+    withMetadata: bool
 
 
 class TokenBalancesOptions(TypedDict):
@@ -90,13 +91,13 @@ class TokenBalancesOptions(TypedDict):
 
 
 class TokenBalance(TypedDict):
-    contractAddress: str
+    contractAddress: Union[HexAddress]
     tokenBalance: Optional[str]
     error: Optional[str]
 
 
 class TokenBalancesResponse(TypedDict):
-    address: str
+    address: Union[HexAddress]
     tokenBalances: List[TokenBalance]
     pageKey: NotRequired[bool]
 
