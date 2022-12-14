@@ -1,6 +1,8 @@
 import enum
 from typing import TypedDict, List, Union, Literal, Any, Optional
 
+from web3.types import ENS
+
 from alchemy.exceptions import AlchemyError
 from alchemy.types import HexAddress
 
@@ -167,7 +169,7 @@ class GetBaseNftsForOwnerOptions(TypedDict, total=False):
 
 
 class GetNftsAlchemyParams(TypedDict, total=False):
-    owner: Required[str]
+    owner: Required[Union[HexAddress, ENS]]
     pageKey: str
     contractAddresses: List[HexAddress]
     filters: List[str]

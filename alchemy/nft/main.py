@@ -1,9 +1,9 @@
-from typing import List
-
 from alchemy.dispatch import api_request
 from alchemy.config import AlchemyConfig
 from alchemy.nft.types import (
     Union,
+    List,
+    ENS,
     Nft,
     RawNft,
     NftTokenType,
@@ -40,6 +40,7 @@ from alchemy.nft.utils import (
     get_nft_from_raw,
     get_nft_contract_from_raw,
     parse_raw_nfts,
+    parse_raw_nft_attribute_rarity,
 )
 from alchemy.provider import AlchemyProvider
 
@@ -92,7 +93,7 @@ class AlchemyNFT:
 
     def _get_nfts_for_owner(
         self,
-        owner: str,
+        owner: Union[HexAddress, ENS],
         options: Union[GetNftsForOwnerOptions, GetBaseNftsForOwnerOptions],
         src_method: str = 'getNftsForOwner',
     ) -> Union[OwnedNftsResponse, OwnedBaseNftsResponse]:
@@ -117,9 +118,11 @@ class AlchemyNFT:
 
     def get_nfts_for_owner(
         self,
-        owner: str,
-        **options: Union[GetNftsForOwnerOptions, GetBaseNftsForOwnerOptions],
+        owner: Union[HexAddress, ENS],
+        options: Union[GetNftsForOwnerOptions, GetBaseNftsForOwnerOptions] = None,
     ) -> Union[OwnedNftsResponse, OwnedBaseNftsResponse]:
+        if options is None:
+            options = {}
         options.setdefault('omitMetadata', False)
         return self._get_nfts_for_owner(owner, options)
 
@@ -261,14 +264,10 @@ class AlchemyNFT:
     def compute_rarity(
         self, contract_address: HexAddress, tokenId: TokenID
     ) -> List[NftAttributeRarity]:
-        response: RawNftAttributeRarity = api_request(
+        response: List[RawNftAttributeRarity] = api_request(
             url=f'{self.url}/computeRarity',
             method_name='computeRarity',
             params={'contractAddress': contract_address, 'tokenId': str(tokenId)},
             max_retries=self.config.max_retries,
         )
-        return NftAttributeRarity(
-            value=response['value'],
-            traitType=response['trait_type'],
-            prevalence=response['prevalence'],
-        )
+        return list(parse_raw_nft_attribute_rarity(response))

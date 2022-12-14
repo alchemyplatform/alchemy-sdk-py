@@ -19,7 +19,7 @@ class Alchemy:
     core: AlchemyCore
     nft: AlchemyNFT
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings = None) -> None:
         self.config = AlchemyConfig(settings)
         self.provider = AlchemyProvider(self.config)
         self.core = AlchemyCore(self.config, Web3(provider=self.provider))

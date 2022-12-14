@@ -20,6 +20,8 @@ class AlchemyConfig:
     url: str
 
     def __init__(self, settings: Settings) -> None:
+        if settings is None:
+            settings = {}
         self.api_key = settings.get('apiKey', DEFAULT_ALCHEMY_API_KEY)
         self.network = settings.get('network', DEFAULT_NETWORK)
         self.max_retries = settings.get('maxRetries', DEFAULT_MAX_RETRIES)

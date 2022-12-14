@@ -1,3 +1,4 @@
+import json
 import random
 from typing import Any
 
@@ -17,6 +18,13 @@ def jitter(value: float) -> float:
     return min(value + (random.random() - 0.5) * value, DEFAULT_BACKOFF_MAX_DELAY_MS)
 
 
+def parse_params(params):
+    for key, value in params.items():
+        if isinstance(value, bool):
+            params[key] = str(value).lower()
+    return params
+
+
 def api_request(url: str, method_name: str, params: TReq, **options: Any) -> TResp:
     headers = {
         **options.get('headers', {}),
@@ -33,17 +41,14 @@ def api_request(url: str, method_name: str, params: TReq, **options: Any) -> TRe
     )
     def do_request(rest_method):
         response = requests.request(
-            method=rest_method,
-            url=url,
-            params=params,
-            headers=headers,
+            method=rest_method, url=url, params=parse_params(params), headers=headers
         )
         response.raise_for_status()
         return response.json()
     try:
         result = do_request(options.get('rest_method', 'GET'))
     except HTTPError as err:
-        raise AlchemyError(str(err)) from err
+        raise AlchemyError(f'Response: {err.response.content}') from err
     return result
 
 

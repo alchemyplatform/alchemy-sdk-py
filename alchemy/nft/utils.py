@@ -16,6 +16,8 @@ from alchemy.nft.types import (
     BaseNft,
     SpamInfo,
     RawBaseNft,
+    RawNftAttributeRarity,
+    NftAttributeRarity,
 )
 
 
@@ -140,3 +142,14 @@ def parse_raw_nfts(
         return get_nft_from_raw(owned_nft)
     else:
         return get_base_nft_from_raw(owned_nft, contract_address)
+
+
+def parse_raw_nft_attribute_rarity(
+    raw_rarities: RawNftAttributeRarity,
+) -> List[NftAttributeRarity]:
+    for raw_rarity in raw_rarities:
+        yield NftAttributeRarity(
+            value=raw_rarity['value'],
+            traitType=raw_rarity['trait_type'],
+            prevalence=raw_rarity['prevalence'],
+        )
