@@ -119,7 +119,6 @@ class AlchemyNFT:
         )
         owned_nft = {
             'ownedNfts': list(map(parse_raw_owned_nfts, response['ownedNfts'])),
-            'pageKey': response['pageKey'],
             'totalCount': response['totalCount'],
         }
         if response.get('pageKey'):
