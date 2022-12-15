@@ -1,5 +1,7 @@
 from typing import TypedDict, List, Union, Optional, Literal, NewType
-from web3.types import HexBytes, BlockNumber, TxReceipt, BlockIdentifier, ENS
+
+from eth_typing import HexStr
+from web3.types import TxReceipt, BlockIdentifier, ENS
 from typing_extensions import NotRequired, Required
 from alchemy.types import HexAddress
 
@@ -80,7 +82,7 @@ class AssetTransfersParams(TypedDict, total=False):
     contractAddresses: List[HexAddress]
     excludeZeroValue: bool
     category: Required[List[AssetTransfersCategory]]
-    maxCount: int
+    maxCount: Union[int, HexStr]
     pageKey: str
     withMetadata: bool
 
@@ -97,17 +99,17 @@ class TokenBalance(TypedDict):
 
 
 class TokenBalancesResponse(TypedDict):
-    address: Union[HexAddress]
+    address: HexAddress
     tokenBalances: List[TokenBalance]
-    pageKey: NotRequired[bool]
+    pageKey: NotRequired[str]
 
 
 class TxReceiptsBlockNumber(TypedDict):
-    blockHash: HexBytes
+    blockHash: HexStr
 
 
 class TxReceiptsBlockHash(TypedDict):
-    blockNumber: BlockNumber
+    blockNumber: HexStr
 
 
 TxReceiptsParams = Union[TxReceiptsBlockNumber, TxReceiptsBlockHash]
