@@ -19,7 +19,8 @@ def jitter(value: float) -> float:
 
 
 def parse_params(params):
-    for key, value in params.items():
+    d = params.copy()
+    for key, value in d.items():
         if isinstance(value, bool):
             params[key] = str(value).lower()
     return params
@@ -45,6 +46,7 @@ def api_request(url: str, method_name: str, params: TReq, **options: Any) -> TRe
         )
         response.raise_for_status()
         return response.json()
+
     try:
         result = do_request(options.get('rest_method', 'GET'))
     except HTTPError as err:

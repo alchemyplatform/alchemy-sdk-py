@@ -18,10 +18,16 @@ from alchemy.nft.types import (
     RawBaseNft,
     RawNftAttributeRarity,
     NftAttributeRarity,
+    RawOwnedBaseNft,
+    RawOwnedNft,
+    OwnedNft,
+    OwnedBaseNft,
 )
 
 
 def parse_nft_token_type(token_type):
+    if token_type is None:
+        token_type = ''
     return NftTokenType.return_value(token_type.upper())
 
 
@@ -49,15 +55,35 @@ def parse_safelist_status(status):
     return status
 
 
+def parse_opensea_metadata(opensea):
+    if opensea is None:
+        return
+    return OpenSeaCollectionMetadata(
+        floorPrice=opensea.get('floorPrice'),
+        collectionName=opensea.get('collectionName'),
+        safelistRequestStatus=parse_safelist_status(
+            opensea.get('safelistRequestStatus')
+        ),
+        imageUrl=opensea.get('imageUrl'),
+        description=opensea.get('description'),
+        externalUrl=opensea.get('externalUrl'),
+        twitterUsername=opensea.get('twitterUsername'),
+        discordUrl=opensea.get('discordUrl'),
+        lastIngestedAt=opensea.get('lastIngestedAt'),
+    )
+
+
 def get_nft_from_raw(raw_nft: RawNft) -> Nft:
     try:
         token_type = parse_nft_token_type(
             raw_nft['id'].get('tokenMetadata', {}).get('tokenType', '')
         )
-        spam_info: SpamInfo = {}
+        spam_info = None
         if raw_nft.get('spamInfo'):
-            spam_info['isSpam'] = bool(raw_nft['spamInfo']['isSpam'])
-            spam_info['classifications'] = raw_nft['spamInfo']['classifications']
+            spam_info = SpamInfo(
+                isSpam=bool(raw_nft['spamInfo']['isSpam']),
+                classifications=raw_nft['spamInfo']['classifications'],
+            )
 
         contract = NftContract(
             address=raw_nft['contract']['address'],
@@ -65,6 +91,9 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
             symbol=raw_nft.get('contractMetadata', {}).get('symbol'),
             totalSupply=raw_nft.get('contractMetadata', {}).get('totalSupply'),
             tokenType=token_type,
+            openSea=parse_opensea_metadata(
+                raw_nft.get('contractMetadata', {}).get('openSea')
+            ),
         )
 
         return Nft(
@@ -100,35 +129,18 @@ def get_base_nft_from_raw(
 
 
 def get_nft_contract_from_raw(raw_nft_contract: RawNftContract) -> NftContract:
-    contract = NftContract(
+    return NftContract(
         address=raw_nft_contract['address'],
-        name=raw_nft_contract['contractMetadata']['name'],
-        symbol=raw_nft_contract['contractMetadata']['symbol'],
-        totalSupply=raw_nft_contract['contractMetadata']['totalSupply'],
+        name=raw_nft_contract['contractMetadata'].get('name'),
+        symbol=raw_nft_contract['contractMetadata'].get('symbol'),
+        totalSupply=raw_nft_contract['contractMetadata'].get('totalSupply'),
         tokenType=parse_nft_token_type(
-            raw_nft_contract['contractMetadata']['tokenType']
+            raw_nft_contract['contractMetadata'].get('tokenType')
+        ),
+        openSea=parse_opensea_metadata(
+            raw_nft_contract['contractMetadata'].get('openSea')
         ),
     )
-
-    raw_opensea = raw_nft_contract['contractMetadata'].get('openSea')
-    if raw_opensea:
-        raw_safelist_status = raw_opensea.get('safelistRequestStatus')
-        safelist_status = parse_safelist_status(raw_safelist_status)
-
-        opensea_metadata = OpenSeaCollectionMetadata(
-            floorPrice=raw_opensea.get('floorPrice'),
-            collectionName=raw_opensea.get('collectionName'),
-            safelistRequestStatus=safelist_status,
-            imageUrl=raw_opensea.get('imageUrl'),
-            description=raw_opensea.get('description'),
-            externalUrl=raw_opensea.get('externalUrl'),
-            twitterUsername=raw_opensea.get('twitterUsername'),
-            discordUrl=raw_opensea.get('discordUrl'),
-            lastIngestedAt=raw_opensea.get('lastIngestedAt'),
-        )
-        contract['openSea'] = opensea_metadata
-
-    return contract
 
 
 def is_nft_with_metadata(nft: Union[RawBaseNft, RawContractBaseNft, RawNft]):
@@ -136,12 +148,23 @@ def is_nft_with_metadata(nft: Union[RawBaseNft, RawContractBaseNft, RawNft]):
 
 
 def parse_raw_nfts(
-    owned_nft: Union[RawContractBaseNft, RawNft], contract_address: HexAddress
+    raw_nft: Union[RawContractBaseNft, RawNft], contract_address: HexAddress
 ) -> Union[Nft, BaseNft]:
-    if is_nft_with_metadata(owned_nft):
-        return get_nft_from_raw(owned_nft)
+    if is_nft_with_metadata(raw_nft):
+        return get_nft_from_raw(raw_nft)
     else:
-        return get_base_nft_from_raw(owned_nft, contract_address)
+        return get_base_nft_from_raw(raw_nft, contract_address)
+
+
+def parse_raw_owned_nfts(
+    raw_owned_nft: Union[RawOwnedBaseNft, RawOwnedNft]
+) -> Union[OwnedNft, OwnedBaseNft]:
+    if is_nft_with_metadata(raw_owned_nft):
+        nft = get_nft_from_raw(raw_owned_nft)
+        return {**nft, 'balance': raw_owned_nft['balance']}
+    else:
+        base_nft = get_base_nft_from_raw(raw_owned_nft)
+        return {**base_nft, 'balance': raw_owned_nft['balance']}
 
 
 def parse_raw_nft_attribute_rarity(

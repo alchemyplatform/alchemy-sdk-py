@@ -5,7 +5,6 @@ from alchemy.nft.types import (
     List,
     ENS,
     Nft,
-    RawNft,
     NftTokenType,
     TokenID,
     GetNftMetadataParams,
@@ -34,6 +33,8 @@ from alchemy.nft.types import (
     GetFloorPriceResponse,
     RawNftAttributeRarity,
     NftAttributeRarity,
+    RawGetBaseNftsResponse,
+    RawGetNftsResponse,
 )
 from alchemy.types import HexAddress, AlchemyApiType
 from alchemy.nft.utils import (
@@ -41,6 +42,7 @@ from alchemy.nft.utils import (
     get_nft_contract_from_raw,
     parse_raw_nfts,
     parse_raw_nft_attribute_rarity,
+    parse_raw_owned_nfts,
 )
 from alchemy.provider import AlchemyProvider
 
@@ -107,14 +109,23 @@ class AlchemyNFT:
             owner=owner, withMetadata=with_metadata, **options
         )
         if filters:
-            params['filters'] = filters
+            params['filters[]'] = filters
 
-        return api_request(
+        response: Union[RawGetBaseNftsResponse, RawGetNftsResponse] = api_request(
             url=f'{self.url}/getNFTs',
             method_name=src_method,
             params=params,
             max_retries=self.config.max_retries,
         )
+        owned_nft = {
+            'ownedNfts': list(map(parse_raw_owned_nfts, response['ownedNfts'])),
+            'pageKey': response['pageKey'],
+            'totalCount': response['totalCount'],
+        }
+        if response.get('pageKey'):
+            owned_nft['pageKey'] = response['pageKey']
+
+        return owned_nft
 
     def get_nfts_for_owner(
         self,
@@ -151,8 +162,8 @@ class AlchemyNFT:
             contractAddress=contract_address,
             startToken=options.get('pageKey'),
             withMetadata=not options['omitMetadata'],
-            limit=options.get('pageSize'),
-            tokenUriTimeoutInMs=options.get('tokenUriTimeoutInMs', 50),
+            limit=options['pageSize'],
+            tokenUriTimeoutInMs=options['tokenUriTimeoutInMs'],
         )
         response: Union[
             RawGetBaseNftsForContractResponse, RawGetNftsForContractResponse
@@ -171,9 +182,13 @@ class AlchemyNFT:
     def get_nfts_for_contract(
         self,
         contract_address: HexAddress,
-        **options: Union[GetBaseNftsForContractOptions, GetNftsForContractOptions],
+        options: Union[GetBaseNftsForContractOptions, GetNftsForContractOptions] = None,
     ) -> Union[NftContractNftsResponse, NftContractBaseNftsResponse]:
+        if options is None:
+            options = {}
         options.setdefault('omitMetadata', False)
+        options.setdefault('pageSize', 100),
+        options.setdefault('tokenUriTimeoutInMs', 50)
         return self._get_nfts_for_contract(contract_address, options)
 
     def _get_owners_for_nft(

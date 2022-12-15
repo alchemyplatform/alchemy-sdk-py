@@ -9,7 +9,6 @@ from alchemy.types import HexAddress
 from typing_extensions import NotRequired, Required
 
 
-# NftTokenType = Literal['ERC721', 'ERC1155', 'UNKNOWN']
 NftExcludeFilters = Literal['SPAM', 'AIRDROPS']
 TokenID = Union[str, int, hex]  # more?
 NftSpamClassification = Literal[
@@ -19,9 +18,6 @@ NftSpamClassification = Literal[
     'MostlyHoneyPotOwners',
     'OwnedByMostHoneyPots',
 ]
-# OpenSeaSafelistRequestStatus = Literal[
-#     'verified', 'approved', 'requested', 'not_requested'
-# ]
 
 
 class OpenSeaSafelistRequestStatus(enum.Enum):
@@ -168,14 +164,19 @@ class GetBaseNftsForOwnerOptions(TypedDict, total=False):
     tokenUriTimeoutInMs: int
 
 
-class GetNftsAlchemyParams(TypedDict, total=False):
-    owner: Required[Union[HexAddress, ENS]]
-    pageKey: str
-    contractAddresses: List[HexAddress]
-    filters: List[str]
-    pageSize: int
-    withMetadata: Required[bool]
-    tokenUriTimeoutInMs: int
+GetNftsAlchemyParams = TypedDict(
+    'GetNftsAlchemyParams',
+    {
+        'owner': Required[Union[HexAddress, ENS]],
+        'pageKey': str,
+        'contractAddresses': List[HexAddress],
+        'filters[]': List[str],
+        'pageSize': int,
+        'withMetadata': Required[bool],
+        'tokenUriTimeoutInMs': int,
+    },
+    total=False,
+)
 
 
 class GetContractMetadataParams(TypedDict):
@@ -203,40 +204,6 @@ class NftContractNftsResponse(TypedDict):
 class NftContractBaseNftsResponse(TypedDict):
     nfts: List[BaseNft]
     pageKey: NotRequired[str]
-
-
-class RawNftTokenMetadata(TypedDict):
-    tokenType: NftTokenType
-
-
-class RawNftId(TypedDict):
-    tokenId: str
-    tokenMetadata: NotRequired[RawNftTokenMetadata]
-
-
-class RawBaseNft(TypedDict):
-    contract: BaseNftContract
-    id: RawNftId
-
-
-class RawOpenSeaCollectionMetadata(TypedDict, total=False):
-    floorPrice: float
-    collectionName: str
-    safelistRequestStatus: str
-    imageUrl: str
-    description: str
-    externalUrl: str
-    twitterUsername: str
-    discordUrl: str
-    lastIngestedAt: str
-
-
-class RawNftContractMetadata(TypedDict, total=False):
-    name: str
-    symbol: str
-    totalSupply: str
-    tokenType: NftTokenType
-    openSea: RawOpenSeaCollectionMetadata
 
 
 class GetNftsForContractAlchemyParams(TypedDict, total=False):
@@ -320,12 +287,47 @@ class NftAttributeRarity(TypedDict):
     prevalence: int
 
 
+class RawNftTokenMetadata(TypedDict):
+    tokenType: NftTokenType
+
+
+class RawNftId(TypedDict):
+    tokenId: str
+    tokenMetadata: NotRequired[RawNftTokenMetadata]
+
+
+class RawBaseNft(TypedDict):
+    contract: BaseNftContract
+    id: RawNftId
+
+
+class RawOpenSeaCollectionMetadata(TypedDict, total=False):
+    floorPrice: float
+    collectionName: str
+    safelistRequestStatus: str
+    imageUrl: str
+    description: str
+    externalUrl: str
+    twitterUsername: str
+    discordUrl: str
+    lastIngestedAt: str
+
+
+class RawNftContractMetadata(TypedDict, total=False):
+    name: str
+    symbol: str
+    totalSupply: str
+    tokenType: NftTokenType
+    openSea: RawOpenSeaCollectionMetadata
+
+
 class RawSpamInfo(TypedDict):
     isSpam: str
     classifications: List[NftSpamClassification]
 
 
-class RawNft(RawBaseNft, total=False):
+class RawNftFields(TypedDict, total=False):
+    id: RawNftId
     title: Required[str]
     description: Union[str, List[str]]
     tokenUri: TokenUri
@@ -335,6 +337,37 @@ class RawNft(RawBaseNft, total=False):
     error: str
     contractMetadata: RawNftContractMetadata
     spamInfo: RawSpamInfo
+
+
+class RawNft(RawNftFields):
+    contract: BaseNftContract
+
+
+class RawBaseNftContract(TypedDict):
+    address: str
+
+
+class RawOwnedNft(RawNftFields):
+    contract: RawBaseNftContract
+    balance: str
+
+
+class RawOwnedBaseNft(TypedDict):
+    contract: RawBaseNftContract
+    id: RawNftId
+    balance: str
+
+
+class RawGetBaseNftsResponse(TypedDict):
+    ownedNfts: List[RawOwnedBaseNft]
+    pageKey: NotRequired[str]
+    totalCount: int
+
+
+class RawGetNftsResponse(TypedDict):
+    ownedNfts: List[RawOwnedNft]
+    pageKey: NotRequired[str]
+    totalCount: int
 
 
 class RawNftContract(TypedDict):
