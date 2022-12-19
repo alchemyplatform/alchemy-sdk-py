@@ -1,10 +1,9 @@
-from typing import Union, Any, List, NoReturn
+from typing import Union, Any, List
 
+from web3 import Web3
 from web3._utils.validation import validate_address
 from web3.eth import Eth
-from web3 import Web3
 
-from alchemy.config import AlchemyConfig
 from alchemy.core.types import (
     HexAddress,
     TokenMetadataResponse,
@@ -29,9 +28,8 @@ def format_block(block: Union[str, int]) -> str:
 
 
 class AlchemyCore(Eth):
-    def __init__(self, config: AlchemyConfig, web3: "Web3") -> None:
+    def __init__(self, web3: "Web3") -> None:
         super().__init__(web3)
-        self.config = config
         self.provider: AlchemyProvider = web3.provider
 
     def get_token_balances(

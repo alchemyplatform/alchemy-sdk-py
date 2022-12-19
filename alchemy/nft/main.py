@@ -44,15 +44,13 @@ from alchemy.nft.utils import (
     parse_raw_nft_attribute_rarity,
     parse_raw_owned_nfts,
 )
-from alchemy.provider import AlchemyProvider
 
 
 class AlchemyNFT:
     _url = None
 
-    def __init__(self, config: AlchemyConfig, provider: AlchemyProvider) -> None:
+    def __init__(self, config: AlchemyConfig) -> None:
         self.config = config
-        self.provider = provider
 
     @property
     def url(self) -> str:
