@@ -2,11 +2,18 @@ from typing import Optional
 
 from eth_typing import HexStr
 from web3 import Web3
-from web3.types import TxData, TxParams, HexBytes, Wei, BlockIdentifier, TxReceipt
+from web3.types import (
+    TxData,
+    TxParams,
+    HexBytes,
+    Wei,
+    BlockIdentifier,
+    TxReceipt,
+)
 
 from alchemy.core import AlchemyCore
 from alchemy.provider import AlchemyProvider
-from alchemy.transact.types import SendPrivateTransactionOptions
+from alchemy.transact.types import SendPrivateTransactionOptions, Hash32
 
 
 class AlchemyTransact:
@@ -39,7 +46,7 @@ class AlchemyTransact:
             method_name='cancelPrivateTransaction',
         )
 
-    def get_transaction(self, transaction_hash: HexStr) -> TxData:
+    def get_transaction(self, transaction_hash: Hash32) -> TxData:
         return self.core.get_transaction(transaction_hash)
 
     def send_transaction(self, transaction: TxParams) -> HexBytes:
