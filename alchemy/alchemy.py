@@ -1,4 +1,9 @@
+import decimal
+from typing import Union, Any, Dict, Optional
+
+from eth_typing import Primitives, HexStr, AnyAddress, ChecksumAddress
 from web3 import Web3
+from web3.types import Wei
 
 from alchemy.config import AlchemyConfig
 from alchemy.core import AlchemyCore
@@ -20,6 +25,65 @@ class Alchemy:
     core: AlchemyCore
     nft: AlchemyNFT
     transact: AlchemyTransact
+
+    # Encoding and Decoding
+    @staticmethod
+    def to_bytes(
+        primitive: Primitives = None, hexstr: HexStr = None, text: str = None
+    ) -> bytes:
+        return Web3.toBytes(primitive, hexstr, text)
+
+    @staticmethod
+    def to_int(
+        primitive: Primitives = None, hexstr: HexStr = None, text: str = None
+    ) -> int:
+        return Web3.toInt(primitive, hexstr, text)
+
+    @staticmethod
+    def to_hex(
+        primitive: Primitives = None, hexstr: HexStr = None, text: str = None
+    ) -> HexStr:
+        return Web3.toHex(primitive, hexstr, text)
+
+    @staticmethod
+    def to_text(
+        primitive: Primitives = None, hexstr: HexStr = None, text: str = None
+    ) -> str:
+        return Web3.toText(primitive, hexstr, text)
+
+    @staticmethod
+    def to_json(obj: Dict[Any, Any]) -> str:
+        return Web3.toJSON(obj)
+
+    # Currency Utility
+    @staticmethod
+    def to_wei(number: Union[int, float, str, decimal.Decimal], unit: str) -> Wei:
+        return Web3.toWei(number, unit)
+
+    @staticmethod
+    def from_wei(number: int, unit: str) -> Union[int, decimal.Decimal]:
+        return Web3.fromWei(number, unit)
+
+    # Address Utility
+    @staticmethod
+    def is_address(value: Any) -> bool:
+        return Web3.isAddress(value)
+
+    @staticmethod
+    def is_checksum_address(value: Any) -> bool:
+        return Web3.isChecksumAddress(value)
+
+    @staticmethod
+    def to_checksum_address(value: Union[AnyAddress, str, bytes]) -> ChecksumAddress:
+        return Web3.toChecksumAddress(value)
+
+    @staticmethod
+    def keccak(
+        primitive: Optional[Primitives] = None,
+        text: Optional[str] = None,
+        hexstr: Optional[HexStr] = None,
+    ) -> bytes:
+        return Web3.keccak(primitive, text, hexstr)
 
     def __init__(self, settings: Settings = None) -> None:
         self.config = AlchemyConfig(settings)
