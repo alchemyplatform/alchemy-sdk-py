@@ -7,7 +7,6 @@ import requests
 from requests import HTTPError
 
 from alchemy.exceptions import AlchemyError
-from alchemy.types import TReq, TResp
 
 DEFAULT_BACKOFF_MULTIPLIER = 1.5
 DEFAULT_BACKOFF_MAX_DELAY_MS = 30 * 1000
@@ -26,7 +25,7 @@ def parse_params(params):
     return params
 
 
-def api_request(url: str, method_name: str, params: TReq, **options: Any) -> TResp:
+def api_request(url: str, method_name: str, params: Any, **options: Any) -> Any:
     headers = {
         **options.get('headers', {}),
         'Alchemy-Ethers-Sdk-Method': method_name,

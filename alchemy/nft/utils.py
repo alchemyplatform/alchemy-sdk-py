@@ -1,4 +1,7 @@
-from typing import Union
+from __future__ import annotations
+
+from typing import cast
+
 from alchemy.types import HexAddress
 from alchemy.exceptions import AlchemyError
 from alchemy.nft.types import (
@@ -15,13 +18,13 @@ from alchemy.nft.types import (
     RawContractBaseNft,
     BaseNft,
     SpamInfo,
-    RawBaseNft,
     RawNftAttributeRarity,
     NftAttributeRarity,
     RawOwnedBaseNft,
     RawOwnedNft,
     OwnedNft,
     OwnedBaseNft,
+    Media,
 )
 
 
@@ -31,14 +34,16 @@ def parse_nft_token_type(token_type):
     return NftTokenType.return_value(token_type.upper())
 
 
-def parse_nft_token_uri(uri: Optional[TokenUri]) -> Optional[TokenUri]:
+def parse_nft_token_uri(uri: Optional[TokenUri | Media]) -> Optional[TokenUri | Media]:
     if uri is not None:
         if len(uri.get('raw', '')) == 0 and len(uri.get('gateway', '')):
             return None
     return uri
 
 
-def parse_nft_token_uri_list(arr: Optional[List[TokenUri]]) -> Optional[List[TokenUri]]:
+def parse_nft_token_uri_list(
+    arr: Optional[List[TokenUri | Media | None]],
+) -> List[TokenUri | Media | None]:
     if arr is None:
         return []
     return [parse_nft_token_uri(uri) for uri in arr]
@@ -100,9 +105,9 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
             contract=contract,
             tokenId=parse_nft_token_id(raw_nft['id']['tokenId']),
             tokenType=token_type,
-            title=raw_nft['title'],
+            title=raw_nft.get('title'),
             description=raw_nft.get('description', ''),
-            timeLastUpdated=raw_nft['timeLastUpdated'],
+            timeLastUpdated=raw_nft.get('timeLastUpdated'),
             metadataError=raw_nft.get('error'),
             rawMetadata=raw_nft.get('metadata'),
             tokenUri=parse_nft_token_uri(raw_nft.get('tokenUri')),
@@ -114,8 +119,8 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
 
 
 def get_base_nft_from_raw(
-    raw_base_nft: Union[RawBaseNft, RawContractBaseNft],
-    contract_address: HexAddress = None,
+    raw_base_nft: RawOwnedBaseNft | RawContractBaseNft,
+    contract_address: Optional[HexAddress] = None,
 ) -> BaseNft:
     return BaseNft(
         contract={'address': contract_address}
@@ -143,32 +148,36 @@ def get_nft_contract_from_raw(raw_nft_contract: RawNftContract) -> NftContract:
     )
 
 
-def is_nft_with_metadata(nft: Union[RawBaseNft, RawContractBaseNft, RawNft]):
+def is_nft_with_metadata(
+    nft: RawOwnedBaseNft | RawOwnedNft | RawContractBaseNft | RawNft,
+):
     return True if nft.get('title') else False
 
 
 def parse_raw_nfts(
-    raw_nft: Union[RawContractBaseNft, RawNft], contract_address: HexAddress
-) -> Union[Nft, BaseNft]:
+    raw_nft: RawContractBaseNft | RawNft, contract_address: HexAddress
+) -> Nft | BaseNft:
     if is_nft_with_metadata(raw_nft):
-        return get_nft_from_raw(raw_nft)
+        return get_nft_from_raw(cast(RawNft, raw_nft))
     else:
-        return get_base_nft_from_raw(raw_nft, contract_address)
+        return get_base_nft_from_raw(
+            cast(RawContractBaseNft, raw_nft), contract_address
+        )
 
 
 def parse_raw_owned_nfts(
-    raw_owned_nft: Union[RawOwnedBaseNft, RawOwnedNft]
-) -> Union[OwnedNft, OwnedBaseNft]:
+    raw_owned_nft: RawOwnedBaseNft | RawOwnedNft,
+) -> OwnedNft | OwnedBaseNft:
     if is_nft_with_metadata(raw_owned_nft):
-        nft = get_nft_from_raw(raw_owned_nft)
+        nft = get_nft_from_raw(cast(RawOwnedNft, raw_owned_nft))
         return {**nft, 'balance': raw_owned_nft['balance']}
     else:
-        base_nft = get_base_nft_from_raw(raw_owned_nft)
+        base_nft = get_base_nft_from_raw(cast(RawOwnedBaseNft, raw_owned_nft))
         return {**base_nft, 'balance': raw_owned_nft['balance']}
 
 
 def parse_raw_nft_attribute_rarity(
-    raw_rarities: RawNftAttributeRarity,
+    raw_rarities: List[RawNftAttributeRarity],
 ) -> List[NftAttributeRarity]:
     for raw_rarity in raw_rarities:
         yield NftAttributeRarity(

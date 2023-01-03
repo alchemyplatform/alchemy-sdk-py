@@ -1,18 +1,9 @@
 import enum
-from typing import TypedDict, TypeVar
-from eth_typing import HexAddress
+from typing import TypedDict, Union
+from eth_typing import HexStr
 
-__all__ = [
-    'HexAddress',
-    'Network',
-    'Settings',
-    'AlchemyApiType',
-    'TReq',
-    'TResp'
-]
+HexAddress = Union[HexStr, str]
 
-TReq = TypeVar('TReq')
-TResp = TypeVar('TResp')
 
 class Network(enum.Enum):
     def __str__(self):

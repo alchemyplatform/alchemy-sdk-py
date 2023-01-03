@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import decimal
 from typing import Union, Any, Dict, Optional
 
@@ -29,27 +31,35 @@ class Alchemy:
     # Encoding and Decoding
     @staticmethod
     def to_bytes(
-        primitive: Primitives = None, hexstr: HexStr = None, text: str = None
+        primitive: Optional[Primitives] = None,
+        hexstr: Optional[HexStr] = None,
+        text: Optional[str] = None,
     ) -> bytes:
-        return Web3.toBytes(primitive, hexstr, text)
+        return Web3.toBytes(primitive, hexstr, text)  # type: ignore
 
     @staticmethod
     def to_int(
-        primitive: Primitives = None, hexstr: HexStr = None, text: str = None
+        primitive: Optional[Primitives] = None,
+        hexstr: Optional[HexStr] = None,
+        text: Optional[str] = None,
     ) -> int:
-        return Web3.toInt(primitive, hexstr, text)
+        return Web3.toInt(primitive, hexstr, text)  # type: ignore
 
     @staticmethod
     def to_hex(
-        primitive: Primitives = None, hexstr: HexStr = None, text: str = None
+        primitive: Optional[Primitives] = None,
+        hexstr: Optional[HexStr] = None,
+        text: Optional[str] = None,
     ) -> HexStr:
-        return Web3.toHex(primitive, hexstr, text)
+        return Web3.toHex(primitive, hexstr, text)  # type: ignore
 
     @staticmethod
     def to_text(
-        primitive: Primitives = None, hexstr: HexStr = None, text: str = None
+        primitive: Optional[Primitives] = None,
+        hexstr: Optional[HexStr] = None,
+        text: Optional[str] = None,
     ) -> str:
-        return Web3.toText(primitive, hexstr, text)
+        return Web3.toText(primitive, hexstr, text)  # type: ignore
 
     @staticmethod
     def to_json(obj: Dict[Any, Any]) -> str:
@@ -85,7 +95,9 @@ class Alchemy:
     ) -> bytes:
         return Web3.keccak(primitive, text, hexstr)
 
-    def __init__(self, settings: Settings = None) -> None:
+    def __init__(self, settings: Optional[Settings] = None) -> None:
+        if settings is None:
+            settings = {}
         self.config = AlchemyConfig(settings)
         self.provider = AlchemyProvider(self.config)
         web3 = Web3(provider=self.provider)

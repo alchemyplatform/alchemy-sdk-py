@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Union, Optional
 from requests import HTTPError
 from web3.providers import JSONBaseProvider
 from web3.types import RPCEndpoint, RPCResponse
@@ -61,15 +61,15 @@ class AlchemyProvider(JSONBaseProvider):
         self,
         method: Union[RPCEndpoint, str],
         params: Any,
-        method_name: str = None,
-        headers: dict = None,
+        method_name: Optional[str] = None,
+        headers: Optional[dict] = None,
         **options: Any,
     ) -> RPCResponse:
         if headers is None:
             headers = {}
         options['max_retries'] = self.max_retries
 
-        request_data = self.encode_rpc_request(method, params)
+        request_data = self.encode_rpc_request(method, params)  # type: ignore
         headers = {
             **headers,
             'Alchemy-Ethers-Sdk-Method': method_name,

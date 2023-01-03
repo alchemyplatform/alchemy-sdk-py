@@ -1,3 +1,5 @@
+from typing import Optional
+
 from alchemy.exceptions import AlchemyError
 from alchemy.types import Settings, AlchemyApiType, Network
 
@@ -14,18 +16,11 @@ class AlchemyConfig:
     @param {url} [settings.url] - The provided connection url
     """
 
-    api_key: str
-    network: Network
-    max_retries: int
-    url: str
-
     def __init__(self, settings: Settings) -> None:
-        if settings is None:
-            settings = {}
-        self.api_key = settings.get('apiKey', DEFAULT_ALCHEMY_API_KEY)
-        self.network = settings.get('network', DEFAULT_NETWORK)
-        self.max_retries = settings.get('maxRetries', DEFAULT_MAX_RETRIES)
-        self.url = settings.get('url')
+        self.api_key: str = settings.get('apiKey', DEFAULT_ALCHEMY_API_KEY)
+        self.network: Network = settings.get('network', DEFAULT_NETWORK)
+        self.max_retries: int = settings.get('maxRetries', DEFAULT_MAX_RETRIES)
+        self.url: Optional[str] = settings.get('url')
 
     def get_request_url(self, api_type: AlchemyApiType) -> str:
         if self.url:

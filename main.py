@@ -34,6 +34,7 @@ if __name__ == '__main__':
             "withMetadata": False,
             "excludeZeroValue": True,
             "maxCount": "0x3e8",
+            "category": ["erc20"],
         }
     )
     print(res, '\n')

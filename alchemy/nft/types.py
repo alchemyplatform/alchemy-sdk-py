@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 from typing import TypedDict, List, Union, Literal, Any, Optional
 
@@ -10,7 +12,7 @@ from typing_extensions import NotRequired, Required
 
 
 NftExcludeFilters = Literal['SPAM', 'AIRDROPS']
-TokenID = Union[str, int, hex]  # more?
+TokenID = Union[str, int]
 NftSpamClassification = Literal[
     'Erc721TooManyOwners',
     'Erc721TooManyTokens',
@@ -47,7 +49,7 @@ class NftTokenType(enum.Enum):
             return cls.UNKNOWN.value
 
 
-class GetNftMetadataParams(TypedDict, total=False):
+class NftMetadataParams(TypedDict, total=False):
     contractAddress: Required[HexAddress]
     tokenId: Required[str]
     tokenType: NftTokenType
@@ -73,9 +75,9 @@ class OpenSeaCollectionMetadata(TypedDict, total=False):
 
 class NftContract(BaseNftContract, total=False):
     tokenType: Required[NftTokenType]
-    name: str
-    symbol: str
-    totalSupply: str
+    name: Optional[str]
+    symbol: Optional[str]
+    totalSupply: Optional[str]
     openSea: OpenSeaCollectionMetadata
 
 
@@ -119,9 +121,9 @@ class Nft(TypedDict):
     title: str
     description: str
     timeLastUpdated: str
-    metadataError: Union[str, None]
-    rawMetadata: Union[NftMetadata, None]
-    tokenUri: Union[TokenUri, None]
+    metadataError: Optional[str]
+    rawMetadata: Optional[NftMetadata]
+    tokenUri: Optional[TokenUri]
     media: List[Media]
     spamInfo: NotRequired[SpamInfo]
 
@@ -146,7 +148,7 @@ class OwnedBaseNftsResponse(TypedDict):
     totalCount: int
 
 
-class GetNftsForOwnerOptions(TypedDict, total=False):
+class NftsForOwnerOptions(TypedDict, total=False):
     pageKey: str
     contractAddresses: List[HexAddress]
     excludeFilters: List[NftExcludeFilters]
@@ -155,7 +157,7 @@ class GetNftsForOwnerOptions(TypedDict, total=False):
     tokenUriTimeoutInMs: int
 
 
-class GetBaseNftsForOwnerOptions(TypedDict, total=False):
+class BaseNftsForOwnerOptions(TypedDict, total=False):
     pageKey: str
     contractAddresses: List[HexAddress]
     excludeFilters: List[NftExcludeFilters]
@@ -164,8 +166,8 @@ class GetBaseNftsForOwnerOptions(TypedDict, total=False):
     tokenUriTimeoutInMs: int
 
 
-GetNftsAlchemyParams = TypedDict(
-    'GetNftsAlchemyParams',
+NftsAlchemyParams = TypedDict(
+    'NftsAlchemyParams',
     {
         'owner': Required[Union[HexAddress, ENS]],
         'pageKey': str,
@@ -179,21 +181,22 @@ GetNftsAlchemyParams = TypedDict(
 )
 
 
-class GetContractMetadataParams(TypedDict):
+class ContractMetadataParams(TypedDict):
     contractAddress: HexAddress
 
 
-class GetNftsForContractOptions(TypedDict, total=False):
+class NftsForContractOptions(TypedDict, total=False):
     pageKey: str
     omitMetadata: bool
     pageSize: int
     tokenUriTimeoutInMs: int
 
 
-class GetBaseNftsForContractOptions(TypedDict, total=False):
+class BaseNftsForContractOptions(TypedDict, total=False):
     pageKey: str
     omitMetadata: Required[Literal[False]]
     pageSize: int
+    tokenUriTimeoutInMs: int
 
 
 class NftContractNftsResponse(TypedDict):
@@ -206,7 +209,7 @@ class NftContractBaseNftsResponse(TypedDict):
     pageKey: NotRequired[str]
 
 
-class GetNftsForContractAlchemyParams(TypedDict, total=False):
+class NftsForContractAlchemyParams(TypedDict, total=False):
     contractAddress: Required[HexAddress]
     startToken: str
     withMetadata: Required[bool]
@@ -214,23 +217,29 @@ class GetNftsForContractAlchemyParams(TypedDict, total=False):
     tokenUriTimeoutInMs: int
 
 
-class GetOwnersForNftResponse(TypedDict):
+class OwnersForNftResponse(TypedDict):
     owners: List[str]
 
 
-class GetOwnersForContractOptions(TypedDict, total=False):
+class OwnersForContractOptions(TypedDict, total=False):
     withTokenBalances: bool
     block: str
     pageKey: str
 
 
-class GetOwnersForContractResponse(TypedDict):
+class OwnersForContractWithTokenBalancesOptions(TypedDict, total=False):
+    withTokenBalances: Required[Literal[True]]
+    block: str
+    pageKey: str
+
+
+class OwnersForContractResponse(TypedDict):
     owners: List[str]
 
 
 class NftContractTokenBalance(TypedDict):
     tokenId: str
-    balance: Union[int, float]
+    balance: float
 
 
 class NftContractOwner(TypedDict):
@@ -238,7 +247,7 @@ class NftContractOwner(TypedDict):
     tokenBalances: List[NftContractTokenBalance]
 
 
-class GetOwnersForContractWithTokenBalancesResponse(TypedDict):
+class OwnersForContractWithTokenBalancesResponse(TypedDict):
     owners: List[NftContractOwner]
     pageKey: NotRequired[str]
 
@@ -266,7 +275,7 @@ class RefreshContractResult(TypedDict):
 
 
 class FloorPriceMarketplace(TypedDict):
-    floorPrice: Union[int, float]
+    floorPrice: float
     priceCurrency: str
     collectionUrl: str
     retrievedAt: str
@@ -276,9 +285,9 @@ class FloorPriceError(TypedDict):
     error: str
 
 
-class GetFloorPriceResponse(TypedDict):
-    openSea: Union[FloorPriceMarketplace, FloorPriceError]
-    looksRare: Union[FloorPriceMarketplace, FloorPriceError]
+class FloorPriceResponse(TypedDict):
+    openSea: FloorPriceMarketplace | FloorPriceError
+    looksRare: FloorPriceMarketplace | FloorPriceError
 
 
 class NftAttributeRarity(TypedDict):
@@ -294,11 +303,6 @@ class RawNftTokenMetadata(TypedDict):
 class RawNftId(TypedDict):
     tokenId: str
     tokenMetadata: NotRequired[RawNftTokenMetadata]
-
-
-class RawBaseNft(TypedDict):
-    contract: BaseNftContract
-    id: RawNftId
 
 
 class RawOpenSeaCollectionMetadata(TypedDict, total=False):
@@ -326,10 +330,18 @@ class RawSpamInfo(TypedDict):
     classifications: List[NftSpamClassification]
 
 
-class RawNftFields(TypedDict, total=False):
+class RawBaseNft(TypedDict):
+    contract: BaseNftContract
     id: RawNftId
+
+
+class RawOwnedBaseNft(RawBaseNft):
+    balance: str
+
+
+class RawNft(RawBaseNft, total=False):
     title: Required[str]
-    description: Union[str, List[str]]
+    description: str | List[str]
     tokenUri: TokenUri
     media: List[Media]
     metadata: NftMetadata
@@ -339,32 +351,17 @@ class RawNftFields(TypedDict, total=False):
     spamInfo: RawSpamInfo
 
 
-class RawNft(RawNftFields):
-    contract: BaseNftContract
-
-
-class RawBaseNftContract(TypedDict):
-    address: str
-
-
-class RawOwnedNft(RawNftFields):
-    contract: RawBaseNftContract
+class RawOwnedNft(RawNft):
     balance: str
 
 
-class RawOwnedBaseNft(TypedDict):
-    contract: RawBaseNftContract
-    id: RawNftId
-    balance: str
-
-
-class RawGetBaseNftsResponse(TypedDict):
+class RawBaseNftsResponse(TypedDict):
     ownedNfts: List[RawOwnedBaseNft]
     pageKey: NotRequired[str]
     totalCount: int
 
 
-class RawGetNftsResponse(TypedDict):
+class RawNftsResponse(TypedDict):
     ownedNfts: List[RawOwnedNft]
     pageKey: NotRequired[str]
     totalCount: int
@@ -379,18 +376,18 @@ class RawContractBaseNft(TypedDict):
     id: RawNftId
 
 
-class RawGetNftsForContractResponse(TypedDict):
+class RawNftsForContractResponse(TypedDict):
     nfts: List[RawContractBaseNft]
     nextToken: NotRequired[str]
 
 
-class RawGetBaseNftsForContractResponse(TypedDict):
+class RawBaseNftsForContractResponse(TypedDict):
     nfts: List[RawNft]
     nextToken: NotRequired[str]
 
 
 class RawReingestContractResponse(TypedDict):
-    contractAddress: str
+    contractAddress: HexAddress
     reingestionState: str
     progress: Optional[str]
 

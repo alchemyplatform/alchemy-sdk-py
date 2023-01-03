@@ -1,6 +1,9 @@
 import unittest
 
+from eth_typing import HexStr
+
 from alchemy import Alchemy
+from alchemy.core.types import TokenBalancesOptionsErc20
 
 
 class TestAlchemyCore(unittest.TestCase):
@@ -13,8 +16,9 @@ class TestAlchemyCore(unittest.TestCase):
         balance = self.alchemy.core.get_token_balances(address, {'type': 'erc20'})
         self.assertIsNotNone(balance.get('pageKey'))
 
+        a: TokenBalancesOptionsErc20 = {'type': 'erc20', 'pageKey': balance.get('pageKey')}
         balance2 = self.alchemy.core.get_token_balances(
-            address, {'type': 'erc20', 'pageKey': balance['pageKey']}
+            address, {'type': 'erc20', 'pageKey': balance.get('pageKey')}
         )
         self.assertTrue(balance2['tokenBalances'])
         self.assertNotEqual(balance['tokenBalances'][0], balance2['tokenBalances'][0])
@@ -52,11 +56,15 @@ class TestAlchemyCore(unittest.TestCase):
 
     def test_get_transaction_receipts(self):
         block_number = hex(self.alchemy.core.get_block_number() - 20)
-        resp = self.alchemy.core.get_transaction_receipts({'blockNumber': block_number})
+        resp = self.alchemy.core.get_transaction_receipts(
+            {'blockNumber': HexStr(block_number)}
+        )
         self.assertTrue(resp.get('receipts'))
         self.assertEqual(resp['receipts'][0]['blockNumber'], block_number)
 
         block_hash = self.alchemy.core.get_block('latest')['hash'].hex()
-        resp = self.alchemy.core.get_transaction_receipts({'blockHash': block_hash})
+        resp = self.alchemy.core.get_transaction_receipts(
+            {'blockHash': HexStr(block_hash)}
+        )
         self.assertTrue(resp.get('receipts'))
         self.assertEqual(resp['receipts'][0]['blockHash'], block_hash)
