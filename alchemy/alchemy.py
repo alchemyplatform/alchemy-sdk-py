@@ -18,8 +18,12 @@ from alchemy.types import Settings
 class Alchemy:
     """
     The Alchemy client. This class is the main entry point.
-    core  - contains the core eth json-rpc calls and Alchemy's
-    nft - namespace contains methods for Alchemy's NFT API.
+
+    Attributes:
+        core: Namespace contains the core eth json-rpc calls and Alchemy's Enhanced APIs.
+        nft: Namespace contains methods for Alchemy's NFT API.
+        transact: Namespace contains methods for sending transactions and
+            checking on the state of submitted transactions
     """
 
     config: AlchemyConfig

@@ -10,10 +10,14 @@ DEFAULT_MAX_RETRIES = 5
 
 class AlchemyConfig:
     """
-    @param {string} [settings.apiKey] - The API key to use for Alchemy
-    @param {Network} [settings.network] - The network to use for Alchemy
-    @param {number} [settings.maxRetries] - The maximum number of retries to attempt
-    @param {url} [settings.url] - The provided connection url
+    This class holds the config information for the SDK client instance
+
+    Attributes:
+        api_key: The API key to use for Alchemy
+        network: The network to use for Alchemy
+        max_retries: The maximum number of retries to perform
+        url: The optional hardcoded URL to send requests to instead of
+            using the network and apiKey.
     """
 
     def __init__(self, settings: Settings) -> None:
