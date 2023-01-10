@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from alchemy import Alchemy
@@ -5,7 +6,7 @@ from alchemy import Alchemy
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy({'apiKey': 'lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu'})
+        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
 
     def test_send_private_transaction(self):
         pass

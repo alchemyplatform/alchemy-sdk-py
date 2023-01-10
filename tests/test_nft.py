@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from alchemy import Alchemy
@@ -6,13 +7,13 @@ from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy({'apiKey': 'lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu'})
+        self.alchemy = Alchemy(api_key='lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
 
     def test_get_nft_metadata(self):
         contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'
         token_id = 403
         resp = self.alchemy.nft.get_nft_metadata(
-            contract_address, token_id, NftTokenType.ERC721.value
+            contract_address, token_id, NftTokenType.ERC721
         )
         self.assertIsNotNone(resp.get('media'))
 
@@ -48,7 +49,7 @@ class TestAlchemyNFT(unittest.TestCase):
         self.assertTrue(resp)
         self.assertIsInstance(resp['totalSupply'], str)
         self.assertIsInstance(resp['symbol'], str)
-        self.assertEqual(resp['tokenType'], NftTokenType.ERC721.value)
+        self.assertEqual(resp['tokenType'], NftTokenType.ERC721)
         self.assertEqual(resp['address'], contract_address)
         self.assertIsNotNone(resp.get('openSea'))
         self.assertIsNotNone(resp['openSea'].get('safelistRequestStatus'))

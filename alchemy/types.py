@@ -1,26 +1,30 @@
 import enum
-from typing import TypedDict, Union
+from typing import TypedDict, Union, Literal
 from eth_typing import HexStr
+from enum import Enum
 
 HexAddress = Union[HexStr, str]
 
 
-class Network(enum.Enum):
-    def __str__(self):
-        return str(self.value)
-
+class Network(str, Enum):
     ETH_MAINNET = 'eth-mainnet'
     ETH_GOERLI = 'eth-goerli'
 
+    def __str__(self) -> str:
+        return str.__str__(self)
+
 
 class Settings(TypedDict, total=False):
-    apiKey: str
+    api_key: str
     network: Network
-    maxRetries: int
+    max_retries: int
     url: str
 
 
-class AlchemyApiType(enum.Enum):
+class AlchemyApiType(str, Enum):
     BASE = 0
     NFT = 1
     WEBHOOK = 2
+
+    def __str__(self) -> str:
+        return str.__str__(self)

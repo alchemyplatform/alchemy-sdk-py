@@ -1,9 +1,9 @@
 from __future__ import annotations
-from typing import Optional, Any, List, cast, NoReturn, Dict, overload
+from typing import Optional, Any, List, cast, NoReturn, overload
 
 from web3 import Web3
-from web3._utils.validation import validate_address
 from web3.eth import Eth
+from web3.types import ENS
 
 from alchemy.core.types import (
     HexAddress,
@@ -21,6 +21,7 @@ from alchemy.core.types import (
 )
 from alchemy.exceptions import AlchemyError
 from alchemy.provider import AlchemyProvider
+from alchemy.utils import is_valid_address
 
 
 def format_block(block: str | int) -> str:
@@ -32,6 +33,17 @@ def format_block(block: str | int) -> str:
 
 
 class AlchemyCore(Eth):
+    """
+    The core namespace contains all commonly-used [web3.eth] methods.
+    If you are already using web3.eth, you should be simply able to
+    replace the `web3.eth` object with `alchemy.core` when accessing
+    provider methods and it should just work.
+
+    Do not call this constructor directly. Instead, instantiate an Alchemy object
+    with `alchemy = Alchemy(config)` and then access the core namespace
+    via `alchemy.core`.
+    """
+
     def __init__(self, web3: Web3) -> None:
         super().__init__(web3)
         self.provider = cast(AlchemyProvider, web3.provider)
@@ -43,7 +55,9 @@ class AlchemyCore(Eth):
         raise NotImplementedError()
 
     @overload
-    def get_token_balances(self, address: HexAddress) -> TokenBalancesResponseErc20:
+    def get_token_balances(
+        self, address: HexAddress | ENS
+    ) -> TokenBalancesResponseErc20:
         """
         Returns the ERC-20 token balances for a specific owner address.
 
@@ -53,7 +67,7 @@ class AlchemyCore(Eth):
 
     @overload
     def get_token_balances(
-        self, address: HexAddress, data: Optional[List[str]] = None
+        self, address: HexAddress | ENS, data: Optional[List[str]] = None
     ) -> TokenBalancesResponse:
         """
         Returns the token balances for a specific owner address given a list of contracts.
@@ -66,7 +80,7 @@ class AlchemyCore(Eth):
 
     @overload
     def get_token_balances(
-        self, address: HexAddress, data: Optional[TokenBalancesOptionsErc20]
+        self, address: HexAddress | ENS, data: Optional[TokenBalancesOptionsErc20]
     ) -> TokenBalancesResponseErc20:
         """
         Returns the ERC-20 token balances for a specific owner.
@@ -80,7 +94,9 @@ class AlchemyCore(Eth):
 
     @overload
     def get_token_balances(
-        self, address: HexAddress, data: Optional[TokenBalancesOptionsDefaultTokens]
+        self,
+        address: HexAddress | ENS,
+        data: Optional[TokenBalancesOptionsDefaultTokens],
     ) -> TokenBalancesResponse:
         """
         Returns the token balances for a specific owner, fetching from the top 100
@@ -96,12 +112,13 @@ class AlchemyCore(Eth):
 
     def get_token_balances(
         self,
-        address: HexAddress,
+        address: HexAddress | ENS,
         data: Optional[
             List[str] | TokenBalancesOptionsErc20 | TokenBalancesOptionsDefaultTokens
         ] = None,
     ) -> TokenBalancesResponseErc20 | TokenBalancesResponse:
-        validate_address(address)
+        if not is_valid_address(address):
+            raise AlchemyError('Address or ENS is not valid')
 
         if isinstance(data, list):
             if len(data) > 1500:
@@ -181,10 +198,10 @@ class AlchemyCore(Eth):
     def get_asset_transfers(
         self, params: AssetTransfersParams | AssetTransfersWithMetadataParams
     ) -> AssetTransfersResponse | AssetTransfersWithMetadataResponse:
-        if params.get('fromAddress'):
-            validate_address(params['fromAddress'])  # write alchemy validation func
-        if params.get('toAddress'):
-            validate_address(params['toAddress'])  # write alchemy validation func
+        if params.get('fromAddress') and not is_valid_address(params['fromAddress']):
+            raise AlchemyError('Entered fromAddress is not valid')
+        if params.get('toAddress') and not is_valid_address(params['toAddress']):
+            raise AlchemyError('Entered toAddress is not valid')
 
         format_params = {}
         from_block = params.pop('fromBlock', None)

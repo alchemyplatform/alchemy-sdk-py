@@ -22,31 +22,37 @@ NftSpamClassification = Literal[
 ]
 
 
-class OpenSeaSafelistRequestStatus(enum.Enum):
+class OpenSeaSafelistRequestStatus(str, enum.Enum):
     VERIFIED = 'verified'
     APPROVED = 'approved'
     REQUESTED = 'requested'
     NOT_REQUESTED = 'not_requested'
 
+    def __str__(self) -> str:
+        return str.__str__(self)
+
     @classmethod
     def return_value(cls, value):
         try:
-            return cls(value).value
+            return cls(value)
         except ValueError:
             return None
 
 
-class NftTokenType(enum.Enum):
+class NftTokenType(str, enum.Enum):
     ERC721 = 'ERC721'
     ERC1155 = 'ERC1155'
     UNKNOWN = 'UNKNOWN'
 
+    def __str__(self) -> str:
+        return str.__str__(self)
+
     @classmethod
     def return_value(cls, value):
         try:
-            return cls(value).value
+            return cls(value)
         except ValueError:
-            return cls.UNKNOWN.value
+            return cls.UNKNOWN
 
 
 class NftMetadataParams(TypedDict, total=False):
@@ -252,7 +258,7 @@ class OwnersForContractWithTokenBalancesResponse(TypedDict):
     pageKey: NotRequired[str]
 
 
-class RefreshState(enum.Enum):
+class RefreshState(str, enum.Enum):
     DOES_NOT_EXIST = 'does_not_exist'
     ALREADY_QUEUED = 'already_queued'
     IN_PROGRESS = 'in_progress'
@@ -260,10 +266,13 @@ class RefreshState(enum.Enum):
     QUEUED = 'queued'
     QUEUE_FAILED = 'queue_failed'
 
+    def __str__(self) -> str:
+        return str.__str__(self)
+
     @classmethod
     def return_value(cls, value):
         try:
-            return cls(value).value
+            return cls(value)
         except ValueError:
             raise AlchemyError(f'Unknown reingestion state: {value}')
 

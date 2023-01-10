@@ -12,7 +12,7 @@ from alchemy.core import AlchemyCore
 from alchemy.nft import AlchemyNFT
 from alchemy.transact import AlchemyTransact
 from alchemy.provider import AlchemyProvider
-from alchemy.types import Settings
+from alchemy.types import Network
 
 
 class Alchemy:
@@ -99,10 +99,14 @@ class Alchemy:
     ) -> bytes:
         return Web3.keccak(primitive, text, hexstr)
 
-    def __init__(self, settings: Optional[Settings] = None) -> None:
-        if settings is None:
-            settings = {}
-        self.config = AlchemyConfig(settings)
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        network: Optional[Network] = None,
+        max_retries: Optional[int] = None,
+        url: Optional[str] = None,
+    ) -> None:
+        self.config = AlchemyConfig(api_key, network, max_retries, url)
         self.provider = AlchemyProvider(self.config)
         web3 = Web3(provider=self.provider)
         self.core = AlchemyCore(web3)

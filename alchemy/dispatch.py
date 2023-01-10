@@ -1,4 +1,3 @@
-import json
 import random
 from typing import Any
 
@@ -6,6 +5,7 @@ import backoff as backoff
 import requests
 from requests import HTTPError
 
+from alchemy.__version__ import __version__
 from alchemy.exceptions import AlchemyError
 
 DEFAULT_BACKOFF_MULTIPLIER = 1.5
@@ -29,7 +29,7 @@ def api_request(url: str, method_name: str, params: Any, **options: Any) -> Any:
     headers = {
         **options.get('headers', {}),
         'Alchemy-Ethers-Sdk-Method': method_name,
-        'Alchemy-Ethers-Sdk-Version': '0.0.1',
+        'Alchemy-Ethers-Sdk-Version': __version__,
     }
 
     @backoff.on_exception(

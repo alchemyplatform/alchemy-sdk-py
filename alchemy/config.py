@@ -1,7 +1,7 @@
 from typing import Optional
 
 from alchemy.exceptions import AlchemyError
-from alchemy.types import Settings, AlchemyApiType, Network
+from alchemy.types import AlchemyApiType, Network
 
 DEFAULT_ALCHEMY_API_KEY = 'demo'
 DEFAULT_NETWORK = Network.ETH_MAINNET
@@ -17,14 +17,36 @@ class AlchemyConfig:
         network: The network to use for Alchemy
         max_retries: The maximum number of retries to perform
         url: The optional hardcoded URL to send requests to instead of
-            using the network and apiKey.
+            using the network and api_key.
     """
 
-    def __init__(self, settings: Settings) -> None:
-        self.api_key: str = settings.get('apiKey', DEFAULT_ALCHEMY_API_KEY)
-        self.network: Network = settings.get('network', DEFAULT_NETWORK)
-        self.max_retries: int = settings.get('maxRetries', DEFAULT_MAX_RETRIES)
-        self.url: Optional[str] = settings.get('url')
+    def __init__(self, api_key, network, max_retries, url=None) -> None:
+        self.api_key: str = self.get_api_key(api_key)
+        self.network: Network = self.get_alchemy_network(network)
+        self.max_retries: int = max_retries or DEFAULT_MAX_RETRIES
+        self.url: Optional[str] = url
+
+    @staticmethod
+    def get_api_key(api_key: str) -> str:
+        if api_key is None:
+            return DEFAULT_ALCHEMY_API_KEY
+        if api_key and not isinstance(api_key, str):
+            raise AlchemyError(
+                f"Invalid apiKey '{api_key}' provided. apiKey must be a string."
+            )
+        return api_key
+
+    @staticmethod
+    def get_alchemy_network(network: Network) -> Network:
+        if network is None:
+            return DEFAULT_NETWORK
+        networks = [n for n in Network]
+        if network not in networks:
+            raise AlchemyError(
+                f"Invalid network '{network}' provided. "
+                f"Network must be one of: {networks}"
+            )
+        return network
 
     def get_request_url(self, api_type: AlchemyApiType) -> str:
         if self.url:

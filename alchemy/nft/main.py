@@ -4,6 +4,7 @@ from typing import Optional, List, overload
 
 from alchemy.config import AlchemyConfig
 from alchemy.dispatch import api_request
+from alchemy.exceptions import AlchemyError
 from alchemy.nft.types import (
     TokenID,
     ENS,
@@ -38,7 +39,6 @@ from alchemy.nft.types import (
     FloorPriceResponse,
     NftAttributeRarity,
     RawNftAttributeRarity,
-    BaseNft,
     RawNft,
 )
 from alchemy.nft.utils import (
@@ -49,9 +49,18 @@ from alchemy.nft.utils import (
     parse_raw_owned_nfts,
 )
 from alchemy.types import HexAddress, AlchemyApiType
+from alchemy.utils import is_valid_address
 
 
 class AlchemyNFT:
+    """
+    The NFT namespace contains all the functionality related to NFTs.
+
+    Do not call this constructor directly. Instead, instantiate an Alchemy object
+    with `alchemy = Alchemy(config)` and then access the core namespace
+    via `alchemy.nft`.
+    """
+
     _url = None
 
     def __init__(self, config: AlchemyConfig) -> None:
@@ -67,7 +76,7 @@ class AlchemyNFT:
         self,
         contract_address: HexAddress,
         token_id: TokenID,
-        token_type: Optional[NftTokenType.value] = None,
+        token_type: Optional[NftTokenType] = None,
         token_uri_timeout: Optional[int] = None,
     ) -> Nft:
         """
@@ -330,7 +339,7 @@ class AlchemyNFT:
         if token_uri_timeout is not None:
             params['tokenUriTimeoutInMs'] = token_uri_timeout
 
-        if NftTokenType.return_value(token_type) is not NftTokenType.UNKNOWN.value:
+        if NftTokenType.return_value(token_type) is not NftTokenType.UNKNOWN:
             params['tokenType'] = token_type
 
         response: RawNft = api_request(
@@ -347,6 +356,9 @@ class AlchemyNFT:
         options: NftsForOwnerOptions | BaseNftsForOwnerOptions,
         src_method: str = 'getNftsForOwner',
     ) -> OwnedNftsResponse | OwnedBaseNftsResponse:
+        if not is_valid_address(owner):
+            raise AlchemyError('Owner address or ENS is not valid')
+
         with_metadata = True
         if options.pop('omitMetadata', None):
             with_metadata = False
@@ -421,10 +433,7 @@ class AlchemyNFT:
         return api_request(
             url=f'{self.url}/getOwnersForToken',
             method_name=src_method,
-            params={
-                'contractAddress': contract_address,
-                'tokenId': str(token_id),
-            },
+            params={'contractAddress': contract_address, 'tokenId': str(token_id)},
             max_retries=self.config.max_retries,
         )
 
