@@ -19,11 +19,12 @@ class Alchemy:
     """
     The Alchemy client. This class is the main entry point.
 
-    Attributes:
-        core: Namespace contains the core eth json-rpc calls and Alchemy's Enhanced APIs.
-        nft: Namespace contains methods for Alchemy's NFT API.
-        transact: Namespace contains methods for sending transactions and
-            checking on the state of submitted transactions
+    :var config: current config of Alchemy object
+    :var provider: provider for making requests to Alchemy API
+    :var core: Namespace contains the core eth json-rpc calls and Alchemy's Enhanced APIs.
+    :var nft: Namespace contains methods for Alchemy's NFT API.
+    :var transact: Namespace contains methods for sending transactions and
+    checking on the state of submitted transactions
     """
 
     config: AlchemyConfig
@@ -106,6 +107,7 @@ class Alchemy:
         max_retries: Optional[int] = None,
         url: Optional[str] = None,
     ) -> None:
+        """Initializes class attributes"""
         self.config = AlchemyConfig(api_key, network, max_retries, url)
         self.provider = AlchemyProvider(self.config)
         web3 = Web3(provider=self.provider)

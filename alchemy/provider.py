@@ -12,7 +12,15 @@ from alchemy.types import AlchemyApiType
 
 
 class AlchemyProvider(JSONBaseProvider):
+    """
+    This class is used for making requests
+
+    :var config: current config of Alchemy object
+    :var url: base connection url
+    """
+
     def __init__(self, config: AlchemyConfig) -> None:
+        """Initializes class attributes"""
         self.config = config
         self.url = config.get_request_url(AlchemyApiType.BASE)
         super().__init__()

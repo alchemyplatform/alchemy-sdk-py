@@ -7,7 +7,7 @@ from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy(api_key='lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
+        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
 
     def test_get_nft_metadata(self):
         contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'

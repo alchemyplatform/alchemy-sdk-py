@@ -24,13 +24,17 @@ class AlchemyTransact:
     checking on the state of submitted transactions.
 
     Do not call this constructor directly. Instead, instantiate an Alchemy object
-    with `alchemy = Alchemy(config)` and then access the transact
+    with `alchemy = Alchemy('your_api_key')` and then access the transact
     namespace via `alchemy.transact`.
+
+    :var provider: provider for making requests to Alchemy API
+    :var core: core namespace contains all commonly-used [web3.eth] methods
     """
 
     def __init__(self, web3: Web3) -> None:
-        self.provider = cast(AlchemyProvider, web3.provider)
-        self.core = AlchemyCore(web3)
+        """Initializes class attributes"""
+        self.provider: AlchemyProvider = cast(AlchemyProvider, web3.provider)
+        self.core: AlchemyCore = AlchemyCore(web3)
 
     def send_private_transaction(
         self,

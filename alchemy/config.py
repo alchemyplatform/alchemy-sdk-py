@@ -12,15 +12,15 @@ class AlchemyConfig:
     """
     This class holds the config information for the SDK client instance
 
-    Attributes:
-        api_key: The API key to use for Alchemy
-        network: The network to use for Alchemy
-        max_retries: The maximum number of retries to perform
-        url: The optional hardcoded URL to send requests to instead of
-            using the network and api_key.
+    :var api_key: The API key to use for Alchemy
+    :var network: The network to use for Alchemy
+    :var max_retries: The maximum number of retries to perform
+    :var url: The optional hardcoded URL to send requests to instead of
+    using the network and api_key.
     """
 
     def __init__(self, api_key, network, max_retries, url=None) -> None:
+        """Initializes class attributes"""
         self.api_key: str = self.get_api_key(api_key)
         self.network: Network = self.get_alchemy_network(network)
         self.max_retries: int = max_retries or DEFAULT_MAX_RETRIES

@@ -40,13 +40,16 @@ class AlchemyCore(Eth):
     provider methods and it should just work.
 
     Do not call this constructor directly. Instead, instantiate an Alchemy object
-    with `alchemy = Alchemy(config)` and then access the core namespace
+    with `alchemy = Alchemy('your_api_key')` and then access the core namespace
     via `alchemy.core`.
+
+    :var provider: provider for making requests to Alchemy API
     """
 
     def __init__(self, web3: Web3) -> None:
+        """Initializes class attributes"""
         super().__init__(web3)
-        self.provider = cast(AlchemyProvider, web3.provider)
+        self.provider: AlchemyProvider = cast(AlchemyProvider, web3.provider)
 
     def namereg(self) -> NoReturn:
         raise NotImplementedError()
@@ -151,15 +154,16 @@ class AlchemyCore(Eth):
             )
             return response['result']
 
-    def get_token_metadata(self, address: HexAddress) -> TokenMetadataResponse:
+    def get_token_metadata(self, contract_address: HexAddress) -> TokenMetadataResponse:
         """
         Returns metadata for a given token contract address.
 
-        :param address: The contract address to get metadata for.
+        :param contract_address: The contract address to get metadata for.
+        :return: TokenMetadataResponse
         """
         response = self.provider.make_request(
             method='alchemy_getTokenMetadata',
-            params=[address],
+            params=[contract_address],
             method_name='getTokenMetadata',
         )
         return response['result']
@@ -178,7 +182,7 @@ class AlchemyCore(Eth):
         response object.
 
         :param params:
-        :return:
+        :return: list of AssetTransfersWithMetadata
         """
         ...
 
@@ -192,6 +196,7 @@ class AlchemyCore(Eth):
         https://docs.alchemy.com/alchemy/enhanced-apis/transfers-api#alchemy_getassettransfers
 
         :param params: An object containing fields for the asset transfer query.
+        :return: list of AssetTransfers
         """
         ...
 
@@ -228,7 +233,7 @@ class AlchemyCore(Eth):
         Gets all transaction receipts for a given block by number or block hash.
 
         :param params: An object containing fields for the transaction receipt query.
-        :return:
+        :return: list of TxReceipt
         """
         response = self.provider.make_request(
             method='alchemy_getTransactionReceipts',
@@ -244,7 +249,6 @@ class AlchemyCore(Eth):
         :param method: The method to call.
         :param params: The parameters to pass to the method.
         :param headers: The optional headers to pass.
-        :return:
         """
         response = self.provider.make_request(
             method=method, params=params, method_name='send', headers=headers

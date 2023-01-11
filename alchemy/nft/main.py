@@ -57,17 +57,21 @@ class AlchemyNFT:
     The NFT namespace contains all the functionality related to NFTs.
 
     Do not call this constructor directly. Instead, instantiate an Alchemy object
-    with `alchemy = Alchemy(config)` and then access the core namespace
+    with `alchemy = Alchemy('your_api_key')` and then access the core namespace
     via `alchemy.nft`.
+
+    :var config: current config of Alchemy object
     """
 
     _url = None
 
     def __init__(self, config: AlchemyConfig) -> None:
-        self.config = config
+        """Initializes class attributes"""
+        self.config: AlchemyConfig = config
 
     @property
     def url(self) -> str:
+        """Url for current connection"""
         if not self._url:
             self._url = self.config.get_request_url(AlchemyApiType.NFT)
         return self._url
@@ -89,6 +93,7 @@ class AlchemyNFT:
             this parameter is the timeout (in milliseconds) for the website hosting
             the metadata to respond. If you want to only access the cache and not
             live fetch any metadata for cache misses then set this value to 0.
+        :return: NFT metadata
         """
         return self._get_nft_metadata(
             contract_address, token_id, token_type, token_uri_timeout
@@ -106,6 +111,7 @@ class AlchemyNFT:
 
         :param owner: The address of the owner.
         :param options: The optional parameters to use for the request.
+        :return: list of owned NFTs
         """
         ...
 
