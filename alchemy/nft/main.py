@@ -82,6 +82,7 @@ class AlchemyNFT:
         token_id: TokenID,
         token_type: Optional[NftTokenType] = None,
         token_uri_timeout: Optional[int] = None,
+        refresh_cache: bool = False,
     ) -> Nft:
         """
         Get the NFT metadata associated with the provided parameters.
@@ -93,10 +94,12 @@ class AlchemyNFT:
             this parameter is the timeout (in milliseconds) for the website hosting
             the metadata to respond. If you want to only access the cache and not
             live fetch any metadata for cache misses then set this value to 0.
+        :param refresh_cache: Whether to refresh the metadata for the given NFT token before returning
+        the response. Defaults to false for faster response times.
         :return: NFT metadata
         """
         return self._get_nft_metadata(
-            contract_address, token_id, token_type, token_uri_timeout
+            contract_address, token_id, token_type, token_uri_timeout, refresh_cache
         )
 
     @overload
@@ -190,8 +193,7 @@ class AlchemyNFT:
         if options is None:
             options = {}
         options.setdefault('omitMetadata', False)
-        options.setdefault('pageSize', 100),
-        options.setdefault('tokenUriTimeoutInMs', 50)
+        options.setdefault('pageSize', 100)
         return self._get_nfts_for_contract(contract_address, options)
 
     def get_owners_for_nft(
@@ -259,7 +261,7 @@ class AlchemyNFT:
             url=f'{self.url}/getSpamContracts',
             method_name='getSpamContracts',
             params={},
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
 
     def is_spam_contract(self, contract_address: HexAddress) -> bool:
@@ -273,7 +275,7 @@ class AlchemyNFT:
             url=f'{self.url}/isSpamContract',
             method_name='isSpamContract',
             params={'contractAddress': contract_address},
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
 
     def refresh_contract(self, contract_address: HexAddress) -> RefreshContractResult:
@@ -290,7 +292,7 @@ class AlchemyNFT:
             url=f'{self.url}/reingestContract',
             method_name='refreshContract',
             params={'contractAddress': contract_address},
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
         return {
             'contractAddress': response['contractAddress'],
@@ -309,7 +311,7 @@ class AlchemyNFT:
             url=f'{self.url}/getFloorPrice',
             method_name='getFloorPrice',
             params={'contractAddress': contract_address},
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
 
     def compute_rarity(
@@ -326,7 +328,7 @@ class AlchemyNFT:
             url=f'{self.url}/computeRarity',
             method_name='computeRarity',
             params={'contractAddress': contract_address, 'tokenId': str(tokenId)},
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
         return list(parse_raw_nft_attribute_rarity(response))
 
@@ -336,11 +338,13 @@ class AlchemyNFT:
         token_id: TokenID,
         token_type: NftTokenType,
         token_uri_timeout: Optional[int],
+        refresh_cache: bool,
         src_method: str = 'getNftMetadata',
     ) -> Nft:
         params: NftMetadataParams = {
             'contractAddress': contract_address,
             'tokenId': str(token_id),
+            'refreshCache': refresh_cache,
         }
         if token_uri_timeout is not None:
             params['tokenUriTimeoutInMs'] = token_uri_timeout
@@ -352,7 +356,7 @@ class AlchemyNFT:
             url=f'{self.url}/getNFTMetadata',
             method_name=src_method,
             params=params,
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
         return get_nft_from_raw(response)
 
@@ -369,19 +373,22 @@ class AlchemyNFT:
         if options.pop('omitMetadata', None):
             with_metadata = False
 
-        filters = options.pop('excludeFilters', None)
+        exclude_filters = options.pop('excludeFilters', None)
+        include_filters = options.pop('includeFilters', None)
         params = NftsAlchemyParams(owner=owner, withMetadata=with_metadata, **options)
-        if filters:
-            params['filters[]'] = filters
+        if exclude_filters:
+            params['excludeFilters[]'] = exclude_filters
+        if include_filters:
+            params['includeFilters[]'] = exclude_filters
 
         response: RawBaseNftsResponse | RawNftsResponse = api_request(
             url=f'{self.url}/getNFTs',
             method_name=src_method,
             params=params,
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
         owned_nft: OwnedNftsResponse | OwnedBaseNftsResponse = {
-            'ownedNfts': list(map(parse_raw_owned_nfts, response['ownedNfts'])),
+            'ownedNfts': list(parse_raw_owned_nfts(response['ownedNfts'])),
             'totalCount': response['totalCount'],
         }
         if response.get('pageKey'):
@@ -397,7 +404,7 @@ class AlchemyNFT:
             url=f'{self.url}/getContractMetadata',
             method_name=src_method,
             params=params,
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
         return get_nft_contract_from_raw(response)
 
@@ -411,21 +418,22 @@ class AlchemyNFT:
             contractAddress=contract_address,
             withMetadata=not options['omitMetadata'],
             limit=options['pageSize'],
-            tokenUriTimeoutInMs=options['tokenUriTimeoutInMs'],
         )
         if options.get('pageKey'):
             params['startToken'] = options['pageKey']
+        if options.get('tokenUriTimeoutInMs'):
+            params['tokenUriTimeoutInMs'] = options['tokenUriTimeoutInMs']
 
         response: RawBaseNftsForContractResponse | RawNftsForContractResponse = (
             api_request(
                 url=f'{self.url}/getNFTsForCollection',
                 method_name=src_method,
                 params=params,
-                max_retries=self.config.max_retries,
+                config=self.config,
             )
         )
         result: NftContractNftsResponse | NftContractBaseNftsResponse = {
-            'nfts': list(map(parse_raw_nfts, response['nfts'], contract_address)),
+            'nfts': list(parse_raw_nfts(response['nfts'], contract_address)),
             'pageKey': response.get('nextToken'),
         }
         return result
@@ -440,7 +448,7 @@ class AlchemyNFT:
             url=f'{self.url}/getOwnersForToken',
             method_name=src_method,
             params={'contractAddress': contract_address, 'tokenId': str(token_id)},
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
 
     def _get_owners_for_contract(
@@ -453,7 +461,7 @@ class AlchemyNFT:
             url=f'{self.url}/getOwnersForCollection',
             method_name=src_method,
             params={**options, 'contractAddress': contract_address},
-            max_retries=self.config.max_retries,
+            config=self.config,
         )
         result = {'owners': response['ownerAddresses']}
         if response.get('pageKey'):

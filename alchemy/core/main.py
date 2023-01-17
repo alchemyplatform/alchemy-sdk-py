@@ -21,15 +21,7 @@ from alchemy.core.types import (
 )
 from alchemy.exceptions import AlchemyError
 from alchemy.provider import AlchemyProvider
-from alchemy.utils import is_valid_address
-
-
-def format_block(block: str | int) -> str:
-    if isinstance(block, str):
-        return block
-    elif isinstance(block, int):
-        return hex(block)
-    return str(block)
+from alchemy.utils import is_valid_address, format_block
 
 
 class AlchemyCore(Eth):

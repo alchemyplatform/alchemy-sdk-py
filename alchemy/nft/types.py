@@ -11,7 +11,6 @@ from alchemy.types import HexAddress
 from typing_extensions import NotRequired, Required
 
 
-NftExcludeFilters = Literal['SPAM', 'AIRDROPS']
 TokenID = Union[str, int]
 NftSpamClassification = Literal[
     'Erc721TooManyOwners',
@@ -55,6 +54,21 @@ class NftTokenType(str, enum.Enum):
             return cls.UNKNOWN
 
 
+class NftFilters(str, enum.Enum):
+    SPAM = 'SPAM'
+    AIRDROPS = 'AIRDROPS'
+
+    def __str__(self) -> str:
+        return str.__str__(self)
+
+
+class NftOrdering(str, enum.Enum):
+    TRANSFERTIME = 'TRANSFERTIME'
+
+    def __str__(self) -> str:
+        return str.__str__(self)
+
+
 class NftMetadataParams(TypedDict, total=False):
     contractAddress: Required[HexAddress]
     tokenId: Required[str]
@@ -85,6 +99,8 @@ class NftContract(BaseNftContract, total=False):
     symbol: Optional[str]
     totalSupply: Optional[str]
     openSea: OpenSeaCollectionMetadata
+    contractDeployer: str
+    deployedBlockNumber: int
 
 
 class BaseNft(TypedDict):
@@ -157,19 +173,23 @@ class OwnedBaseNftsResponse(TypedDict):
 class NftsForOwnerOptions(TypedDict, total=False):
     pageKey: str
     contractAddresses: List[HexAddress]
-    excludeFilters: List[NftExcludeFilters]
+    excludeFilters: List[NftFilters]
+    includeFilters: List[NftFilters]
     pageSize: int
     omitMetadata: bool
     tokenUriTimeoutInMs: int
+    orderBy: NftOrdering
 
 
 class BaseNftsForOwnerOptions(TypedDict, total=False):
     pageKey: str
     contractAddresses: List[HexAddress]
-    excludeFilters: List[NftExcludeFilters]
+    excludeFilters: List[NftFilters]
+    includeFilters: List[NftFilters]
     pageSize: int
     omitMetadata: Required[Literal[True]]
     tokenUriTimeoutInMs: int
+    orderBy: NftOrdering
 
 
 NftsAlchemyParams = TypedDict(
@@ -178,10 +198,12 @@ NftsAlchemyParams = TypedDict(
         'owner': Required[Union[HexAddress, ENS]],
         'pageKey': str,
         'contractAddresses': List[HexAddress],
-        'filters[]': List[str],
+        'excludeFilters[]': List[NftFilters],
+        'includeFilters[]': List[NftFilters],
         'pageSize': int,
         'withMetadata': Required[bool],
         'tokenUriTimeoutInMs': int,
+        'orderBy': str,
     },
     total=False,
 )
@@ -332,6 +354,8 @@ class RawNftContractMetadata(TypedDict, total=False):
     totalSupply: str
     tokenType: NftTokenType
     openSea: RawOpenSeaCollectionMetadata
+    contractDeployer: str
+    deployedBlockNumber: int
 
 
 class RawSpamInfo(TypedDict):

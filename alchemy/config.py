@@ -17,14 +17,19 @@ class AlchemyConfig:
     :var max_retries: The maximum number of retries to perform
     :var url: The optional hardcoded URL to send requests to instead of
     using the network and api_key.
+    :var request_timeout: The optional Request timeout provided in `s`
+    for NFT and NOTIFY API. Defaults is None.
     """
 
-    def __init__(self, api_key, network, max_retries, url=None) -> None:
+    def __init__(
+        self, api_key, network, max_retries, url=None, request_timeout=None
+    ) -> None:
         """Initializes class attributes"""
         self.api_key: str = self.get_api_key(api_key)
         self.network: Network = self.get_alchemy_network(network)
         self.max_retries: int = max_retries or DEFAULT_MAX_RETRIES
         self.url: Optional[str] = url
+        self.request_timeout: Optional[float] = request_timeout
 
     @staticmethod
     def get_api_key(api_key: str) -> str:

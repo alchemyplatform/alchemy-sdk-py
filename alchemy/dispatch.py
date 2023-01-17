@@ -10,7 +10,6 @@ from alchemy.exceptions import AlchemyError
 
 DEFAULT_BACKOFF_MULTIPLIER = 1.5
 DEFAULT_BACKOFF_MAX_DELAY_MS = 30 * 1000
-DEFAULT_BACKOFF_MAX_ATTEMPTS = 5
 
 
 def jitter(value: float) -> float:
@@ -31,17 +30,22 @@ def api_request(url: str, method_name: str, params: Any, **options: Any) -> Any:
         'Alchemy-Ethers-Sdk-Method': method_name,
         'Alchemy-Ethers-Sdk-Version': __version__,
     }
+    config = options.get('config', {})
 
     @backoff.on_exception(
         wait_gen=options.get('wait_gen', backoff.expo),
         exception=HTTPError,
         jitter=options.get('jitter', jitter),
-        max_tries=options.get('max_retries', DEFAULT_BACKOFF_MAX_ATTEMPTS),
+        max_tries=config.max_retries,
         factor=options.get('backoff_multiplier', DEFAULT_BACKOFF_MULTIPLIER),
     )
     def do_request(rest_method):
         response = requests.request(
-            method=rest_method, url=url, params=parse_params(params), headers=headers
+            method=rest_method,
+            url=url,
+            params=parse_params(params),
+            headers=headers,
+            timeout=config.request_timeout,
         )
         response.raise_for_status()
         return response.json()
@@ -58,7 +62,7 @@ def post_request(url: str, request_data: bytes, headers: dict, **options: Any) -
         wait_gen=options.get('wait_gen', backoff.expo),
         exception=HTTPError,
         jitter=options.get('jitter', jitter),
-        max_tries=options.get('max_retries', DEFAULT_BACKOFF_MAX_ATTEMPTS),
+        max_tries=options.get('max_retries'),
         factor=options.get('backoff_multiplier', DEFAULT_BACKOFF_MULTIPLIER),
     )
     def do_request():

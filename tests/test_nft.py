@@ -2,7 +2,7 @@ import os
 import unittest
 
 from alchemy import Alchemy
-from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus
+from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus, NftFilters
 
 
 class TestAlchemyNFT(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestAlchemyNFT(unittest.TestCase):
         owner = 'vitalik.eth'
         resp_with_spam = self.alchemy.nft.get_nfts_for_owner(owner)
         resp_no_spam = self.alchemy.nft.get_nfts_for_owner(
-            owner, {'excludeFilters': ['SPAM']}
+            owner, {'excludeFilters': [NftFilters.SPAM]}
         )
         self.assertNotEqual(resp_with_spam['totalCount'], resp_no_spam['totalCount'])
         spam_nft = next(
@@ -78,7 +78,7 @@ class TestAlchemyNFT(unittest.TestCase):
     def test_get_owners_for_nft_from_nft(self):
         owner = "0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D"
         nfts = self.alchemy.nft.get_nfts_for_owner(
-            owner, {'excludeFilters': ['SPAM'], 'omitMetadata': True}
+            owner, {'excludeFilters': [NftFilters.SPAM], 'omitMetadata': True}
         )
         self.assertTrue(nfts.get('ownedNfts'))
         resp = self.alchemy.nft.get_owners_for_nft(

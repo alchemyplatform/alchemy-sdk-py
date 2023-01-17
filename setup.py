@@ -11,7 +11,8 @@ with open(os.path.join(here, 'README.md'), 'r') as f:
 
 setup(
     name=about['__title__'],
-    packages=find_packages(exclude=['tests', 'tests.*']),
+    packages=find_packages(exclude=['tests', 'tests.*', 'docs', 'docs.*']),
+    author=about['__author__'],
     version=about['__version__'],
     license=about['__license__'],
     install_requires=['web3', 'requests', 'backoff', 'typing-extensions'],

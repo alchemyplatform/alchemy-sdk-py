@@ -49,11 +49,6 @@ def parse_nft_token_uri_list(
     return [parse_nft_token_uri(uri) for uri in arr]
 
 
-def parse_nft_token_id(token_id):
-    # TODO: understand what type is token id and format to string
-    return str(token_id)
-
-
 def parse_safelist_status(status):
     if status is not None:
         return OpenSeaSafelistRequestStatus.return_value(status.lower())
@@ -89,21 +84,21 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
                 isSpam=bool(raw_nft['spamInfo']['isSpam']),
                 classifications=raw_nft['spamInfo']['classifications'],
             )
-
+        contract_metadata = raw_nft.get('contractMetadata', {})
         contract = NftContract(
             address=raw_nft['contract']['address'],
-            name=raw_nft.get('contractMetadata', {}).get('name'),
-            symbol=raw_nft.get('contractMetadata', {}).get('symbol'),
-            totalSupply=raw_nft.get('contractMetadata', {}).get('totalSupply'),
+            name=contract_metadata.get('name'),
+            symbol=contract_metadata.get('symbol'),
+            totalSupply=contract_metadata.get('totalSupply'),
             tokenType=token_type,
-            openSea=parse_opensea_metadata(
-                raw_nft.get('contractMetadata', {}).get('openSea')
-            ),
+            openSea=parse_opensea_metadata(contract_metadata.get('openSea')),
+            contractDeployer=contract_metadata.get('contractDeployer'),
+            deployedBlockNumber=contract_metadata.get('deployedBlockNumber'),
         )
 
         return Nft(
             contract=contract,
-            tokenId=parse_nft_token_id(raw_nft['id']['tokenId']),
+            tokenId=str(raw_nft['id']['tokenId']),
             tokenType=token_type,
             title=raw_nft.get('title'),
             description=raw_nft.get('description', ''),
@@ -126,7 +121,7 @@ def get_base_nft_from_raw(
         contract={'address': contract_address}
         if contract_address
         else raw_base_nft['contract'],
-        tokenId=parse_nft_token_id(raw_base_nft['id']['tokenId']),
+        tokenId=str(raw_base_nft['id']['tokenId']),
         tokenType=parse_nft_token_type(
             raw_base_nft['id'].get('tokenMetadata', {}).get('tokenType', '')
         ),
@@ -145,6 +140,10 @@ def get_nft_contract_from_raw(raw_nft_contract: RawNftContract) -> NftContract:
         openSea=parse_opensea_metadata(
             raw_nft_contract['contractMetadata'].get('openSea')
         ),
+        contractDeployer=raw_nft_contract['contractMetadata'].get('contractDeployer'),
+        deployedBlockNumber=raw_nft_contract['contractMetadata'].get(
+            'deployedBlockNumber'
+        ),
     )
 
 
@@ -155,25 +154,27 @@ def is_nft_with_metadata(
 
 
 def parse_raw_nfts(
-    raw_nft: RawContractBaseNft | RawNft, contract_address: HexAddress
+    raw_nfts: List[RawContractBaseNft | RawNft], contract_address: HexAddress
 ) -> Nft | BaseNft:
-    if is_nft_with_metadata(raw_nft):
-        return get_nft_from_raw(cast(RawNft, raw_nft))
-    else:
-        return get_base_nft_from_raw(
-            cast(RawContractBaseNft, raw_nft), contract_address
-        )
+    for raw_nft in raw_nfts:
+        if is_nft_with_metadata(raw_nft):
+            yield get_nft_from_raw(cast(RawNft, raw_nft))
+        else:
+            yield get_base_nft_from_raw(
+                cast(RawContractBaseNft, raw_nft), contract_address
+            )
 
 
 def parse_raw_owned_nfts(
-    raw_owned_nft: RawOwnedBaseNft | RawOwnedNft,
+    raw_owned_nfts: List[RawOwnedBaseNft | RawOwnedNft],
 ) -> OwnedNft | OwnedBaseNft:
-    if is_nft_with_metadata(raw_owned_nft):
-        nft = get_nft_from_raw(cast(RawOwnedNft, raw_owned_nft))
-        return {**nft, 'balance': raw_owned_nft['balance']}
-    else:
-        base_nft = get_base_nft_from_raw(cast(RawOwnedBaseNft, raw_owned_nft))
-        return {**base_nft, 'balance': raw_owned_nft['balance']}
+    for raw_owned_nft in raw_owned_nfts:
+        if is_nft_with_metadata(raw_owned_nft):
+            nft = get_nft_from_raw(cast(RawOwnedNft, raw_owned_nft))
+            yield {**nft, 'balance': raw_owned_nft['balance']}
+        else:
+            base_nft = get_base_nft_from_raw(cast(RawOwnedBaseNft, raw_owned_nft))
+            yield {**base_nft, 'balance': raw_owned_nft['balance']}
 
 
 def parse_raw_nft_attribute_rarity(

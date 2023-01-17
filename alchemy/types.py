@@ -8,6 +8,14 @@ HexAddress = Union[HexStr, str]
 class Network(str, Enum):
     ETH_MAINNET = 'eth-mainnet'
     ETH_GOERLI = 'eth-goerli'
+    MATIC_MAINNET = ('polygon-mainnet',)
+    MATIC_MUMBAI = ('polygon-mumbai',)
+    OPT_MAINNET = ('opt-mainnet',)
+    OPT_GOERLI = ('opt-goerli',)
+    OPT_KOVAN = ('opt-kovan',)
+    ARB_MAINNET = ('arb-mainnet',)
+    ARB_GOERLI = ('arb-goerli',)
+    ASTAR_MAINNET = 'astar-mainnet'
 
     def __str__(self) -> str:
         return str.__str__(self)
