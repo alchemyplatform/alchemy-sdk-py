@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import enum
-from typing import TypedDict, List, Union, Optional, Literal, NewType
+from typing import TypedDict, List, Union, Optional, Literal, Tuple
 
 from eth_typing import HexStr
-from web3.types import TxReceipt, BlockIdentifier, ENS
-from typing_extensions import NotRequired, Required
+from web3.types import TxReceipt, LatestBlockParam
+from typing_extensions import NotRequired
 from alchemy.types import HexAddress
 
 
@@ -13,7 +13,7 @@ AssetTransfersCategory = Literal[
     'external', 'internal', 'erc20', 'erc721', 'erc1155', 'specialnft'
 ]
 SortingOrder = Literal['asc', 'desc']
-ContractAddress = NewType('ContractAddress', str)
+BlockIdentifier = Union[HexStr, int, LatestBlockParam]
 
 
 class TokenMetadataResponse(TypedDict):
@@ -62,49 +62,18 @@ class AssetTransfersWithMetadataResult(AssetTransfersResult):
     metadata: AssetTransfersMetadata
 
 
-class AssetTransfersResponse(TypedDict):
-    transfers: List[AssetTransfersResult]
-    pageKey: NotRequired[str]
+AssetTransfersResponse = Tuple[List[AssetTransfersResult], Optional[str]]
+AssetTransfersWithMetadataResponse = Tuple[
+    List[AssetTransfersWithMetadataResult], Optional[str]
+]
 
 
-class AssetTransfersWithMetadataResponse(TypedDict):
-    transfers: List[AssetTransfersWithMetadataResult]
-    pageKey: NotRequired[str]
-
-
-class AssetTransfersBase(TypedDict, total=False):
-    fromBlock: BlockIdentifier
-    toBlock: BlockIdentifier
-    order: SortingOrder
-    fromAddress: HexAddress | ENS
-    toAddress: HexAddress | ENS
-    contractAddresses: List[HexAddress]
-    excludeZeroValue: bool
-    category: Required[List[AssetTransfersCategory]]
-    maxCount: int | HexStr
-    pageKey: str
-
-
-class AssetTransfersParams(AssetTransfersBase, total=False):
-    withMetadata: bool
-
-
-class AssetTransfersWithMetadataParams(AssetTransfersBase):
-    withMetadata: Literal[True]
-
-
-class TokenBalanceType(enum.Enum):
+class TokenBalanceType(str, enum.Enum):
     DEFAULT_TOKENS = 'DEFAULT_TOKENS'
     ERC20 = 'erc20'
 
-
-class TokenBalancesOptionsErc20(TypedDict):
-    type: Literal[TokenBalanceType.ERC20]
-    pageKey: NotRequired[str]
-
-
-class TokenBalancesOptionsDefaultTokens(TypedDict):
-    type: Literal[TokenBalanceType.DEFAULT_TOKENS]
+    def __str__(self) -> str:
+        return str.__str__(self)
 
 
 class TokenBalance(TypedDict):
@@ -122,16 +91,4 @@ class TokenBalancesResponseErc20(TokenBalancesResponse):
     pageKey: NotRequired[str]
 
 
-class TxReceiptsBlockNumber(TypedDict):
-    blockHash: HexStr
-
-
-class TxReceiptsBlockHash(TypedDict):
-    blockNumber: HexStr
-
-
-TxReceiptsParams = Union[TxReceiptsBlockNumber, TxReceiptsBlockHash]
-
-
-class TxReceiptsResponse(TypedDict):
-    receipts: Optional[List[TxReceipt]]
+TxReceiptsResponse = Optional[List[TxReceipt]]

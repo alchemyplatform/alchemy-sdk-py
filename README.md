@@ -46,7 +46,7 @@ network = Network.ETH_MAINNET
 max_retries = 3
 
 # create Alchemy object
-alchemy = Alchemy(api_key, network, max_retries)
+alchemy = Alchemy(api_key, network, max_retries=max_retries)
 ```
 
 > **ℹ️ Creating a unique Alchemy API Key**
@@ -74,7 +74,7 @@ alchemy = Alchemy()
 block_hash = Alchemy.to_hex(alchemy.core.get_block('latest')['hash'])
 
 # Access Alchemy Enhanced API requests. Gets all transaction receipts for a given block hash.
-alchemy.core.get_transaction_receipts({'blockHash': block_hash})
+alchemy.core.get_transaction_receipts(block_hash=block_hash)
 
 # Access the Alchemy NFT API. Gets contract metadata for NFT and gets collection name
 contract = "0x01234567bac6ff94d7e4f0ee23119cf848f93245"
@@ -148,18 +148,19 @@ from alchemy.nft import NftFilters
 alchemy = Alchemy()
 
 # Get how many NFTs an address owns.
-nfts = alchemy.nft.get_nfts_for_owner('vitalik.eth')
-print(nfts['totalCount'])
+nfts, total_count, page_key = alchemy.nft.get_nfts_for_owner('vitalik.eth')
+print(total_count)
 
 # Get all the image urls for all the NFTs an address owns.
-for nft in nfts['ownedNfts']:
+for nft in nfts:
     print(nft.get('media'))
 
 # Filter out spam NFTs.
-options = {'excludeFilters': [NftFilters.SPAM]}
-nfts_without_spam = alchemy.nft.get_nfts_for_owner('vitalik.eth', options)
+nfts_without_spam = alchemy.nft.get_nfts_for_owner('vitalik.eth', exclude_filters=[NftFilters.SPAM])
 ```
-
+"pydoc-markdown -I src -m core --render-toc > core.md
+pydoc-markdown -m alchemy.core -I $(pwd) > core.md
+"
 ### Getting all the owners of the BAYC NFT
 
 ```python
@@ -172,12 +173,12 @@ bayc_address = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'
 
 # Omit the NFT metadata for smaller payloads.
 options = {'omitMetadata': True, 'pageSize': 5}
-nfts = alchemy.nft.get_nfts_for_contract(bayc_address, options)
-for nft in nfts['nfts']:
-    response = alchemy.nft.get_owners_for_nft(
+nfts, page_key = alchemy.nft.get_nfts_for_contract(bayc_address, omit_metadata=True, page_size=5)
+for nft in nfts:
+    owners = alchemy.nft.get_owners_for_nft(
         contract_address=nft['contract']['address'], token_id=nft['tokenId']
     )
-    print(f"owners: {response['owners']}, tokenId: {nft['tokenId']}")
+    print(f"owners: {owners}, tokenId: {nft['tokenId']}")
 ```
 
 ### Get all outbound transfers for a provided address

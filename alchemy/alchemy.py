@@ -196,12 +196,19 @@ class Alchemy:
         self,
         api_key: Optional[str] = None,
         network: Optional[Network] = None,
-        max_retries: Optional[int] = None,
-        url: Optional[str] = None,
-        request_timeout: Optional[float] = None,
+        **kwargs: Any,
     ) -> None:
-        """Initializes class attributes"""
-        self.config = AlchemyConfig(api_key, network, max_retries, url, request_timeout)
+        """
+        Initializes class attributes
+
+        :param api_key: The API key to use for Alchemy
+        :param network: The network to use for Alchemy
+        :param max_retries: The maximum number of retries to attempt
+        :param request_timeout: The timeout after which request should fail
+        :param url: The optional hardcoded URL to send requests to instead of
+            using the network and api_key.
+        """
+        self.config = AlchemyConfig(api_key, network, **kwargs)
         self.provider = AlchemyProvider(self.config)
         web3 = Web3(provider=self.provider)
         self.core = AlchemyCore(web3)

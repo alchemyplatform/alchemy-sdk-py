@@ -11,7 +11,7 @@ Namespaces
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
    alchemy.core
    alchemy.nft

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from typing import TypedDict, List, Union, Literal, Any, Optional
+from typing import TypedDict, List, Union, Literal, Any, Optional, Tuple
 
 from web3.types import ENS
 
@@ -158,38 +158,8 @@ class OwnedBaseNft(BaseNft):
     balance: int
 
 
-class OwnedNftsResponse(TypedDict):
-    ownedNfts: List[OwnedNft]
-    pageKey: NotRequired[str]
-    totalCount: int
-
-
-class OwnedBaseNftsResponse(TypedDict):
-    ownedNfts: List[OwnedBaseNft]
-    pageKey: NotRequired[str]
-    totalCount: int
-
-
-class NftsForOwnerOptions(TypedDict, total=False):
-    pageKey: str
-    contractAddresses: List[HexAddress]
-    excludeFilters: List[NftFilters]
-    includeFilters: List[NftFilters]
-    pageSize: int
-    omitMetadata: bool
-    tokenUriTimeoutInMs: int
-    orderBy: NftOrdering
-
-
-class BaseNftsForOwnerOptions(TypedDict, total=False):
-    pageKey: str
-    contractAddresses: List[HexAddress]
-    excludeFilters: List[NftFilters]
-    includeFilters: List[NftFilters]
-    pageSize: int
-    omitMetadata: Required[Literal[True]]
-    tokenUriTimeoutInMs: int
-    orderBy: NftOrdering
+OwnedNftsResponse = Tuple[List[OwnedNft], int, Optional[str]]
+OwnedBaseNftsResponse = Tuple[List[OwnedBaseNft], int, Optional[str]]
 
 
 NftsAlchemyParams = TypedDict(
@@ -208,33 +178,8 @@ NftsAlchemyParams = TypedDict(
     total=False,
 )
 
-
-class ContractMetadataParams(TypedDict):
-    contractAddress: HexAddress
-
-
-class NftsForContractOptions(TypedDict, total=False):
-    pageKey: str
-    omitMetadata: bool
-    pageSize: int
-    tokenUriTimeoutInMs: int
-
-
-class BaseNftsForContractOptions(TypedDict, total=False):
-    pageKey: str
-    omitMetadata: Required[Literal[False]]
-    pageSize: int
-    tokenUriTimeoutInMs: int
-
-
-class NftContractNftsResponse(TypedDict):
-    nfts: List[Nft]
-    pageKey: NotRequired[str]
-
-
-class NftContractBaseNftsResponse(TypedDict):
-    nfts: List[BaseNft]
-    pageKey: NotRequired[str]
+NftContractNftsResponse = Tuple[List[Nft], Optional[str]]
+NftContractBaseNftsResponse = Tuple[List[BaseNft], Optional[str]]
 
 
 class NftsForContractAlchemyParams(TypedDict, total=False):
@@ -243,26 +188,6 @@ class NftsForContractAlchemyParams(TypedDict, total=False):
     withMetadata: Required[bool]
     limit: int
     tokenUriTimeoutInMs: int
-
-
-class OwnersForNftResponse(TypedDict):
-    owners: List[str]
-
-
-class OwnersForContractOptions(TypedDict, total=False):
-    withTokenBalances: bool
-    block: str
-    pageKey: str
-
-
-class OwnersForContractWithTokenBalancesOptions(TypedDict, total=False):
-    withTokenBalances: Required[Literal[True]]
-    block: str
-    pageKey: str
-
-
-class OwnersForContractResponse(TypedDict):
-    owners: List[str]
 
 
 class NftContractTokenBalance(TypedDict):
@@ -275,9 +200,10 @@ class NftContractOwner(TypedDict):
     tokenBalances: List[NftContractTokenBalance]
 
 
-class OwnersForContractWithTokenBalancesResponse(TypedDict):
-    owners: List[NftContractOwner]
-    pageKey: NotRequired[str]
+OwnersForContractResponse = Tuple[List[str], Optional[str]]
+OwnersForContractWithTokenBalancesResponse = Tuple[
+    List[NftContractOwner], Optional[str]
+]
 
 
 class RefreshState(str, enum.Enum):
