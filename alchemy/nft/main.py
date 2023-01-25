@@ -495,7 +495,6 @@ class AlchemyNFT:
         total_count = response['totalCount']
         page_key = response.get('pageKey')
 
-        print(total_count, page_key)
         return owned_nfts, total_count, page_key
 
     def _get_contract_metadata(

@@ -22,7 +22,6 @@ class TestAlchemyNFT(unittest.TestCase):
         owned_nfts, _, _ = self.alchemy.nft.get_nfts_for_owner(
             owner, page_size=30, omit_metadata=False
         )
-        """pydoc-markdown -m alchemy -I $(pwd) > Alchemy.md"""
 
         self.assertTrue(owned_nfts)
         self.assertEqual(len(owned_nfts), 30)

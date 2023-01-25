@@ -158,9 +158,7 @@ for nft in nfts:
 # Filter out spam NFTs.
 nfts_without_spam = alchemy.nft.get_nfts_for_owner('vitalik.eth', exclude_filters=[NftFilters.SPAM])
 ```
-"pydoc-markdown -I src -m core --render-toc > core.md
-pydoc-markdown -m alchemy.core -I $(pwd) > core.md
-"
+
 ### Getting all the owners of the BAYC NFT
 
 ```python

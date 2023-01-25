@@ -1,21 +1,18 @@
 ## Building docs
-To build docs go to `alchemy-sdk-py/docs` directory. And run build command
+Using Sphinx to generate api docs.
+Install Sphinx:
+```bash
+pip install -U sphinx
+```
+Install furo theme:
+```bash
+pip install furo
+```
+To build docs go to `alchemy-sdk-py/docs` directory. And run command:
 ```bash
 make clean html
 ```
-To run all tests:
-```bash
-python -m unittest
-```
-Run tests only for core namespace:
-```bash
-python -m unittest tests/test_core.py
-```
-Run tests only for nft namespace:
-```bash
-python -m unittest tests/test_nft.py
-```
-Run tests only for nft transact:
-```bash
-python -m unittest tests/test_transact.py
-```
+Open: http://localhost:63342/alchemy-sdk-py/docs/_build/html/index.html
+
+## Hosting docs
+To host docs visit https://sphinx-intro-tutorial.readthedocs.io/en/latest/docs_hosting.html
