@@ -206,6 +206,17 @@ OwnersForContractWithTokenBalancesResponse = Tuple[
 ]
 
 
+class ContractForOwner(NftContract):
+    totalBalance: float
+    numDistinctTokensOwned: int
+    isSpam: bool
+    tokenId: str
+    media: Media
+
+
+ContractsForOwnerResponse = Tuple[List[ContractForOwner], int, Optional[str]]
+
+
 class RefreshState(str, enum.Enum):
     DOES_NOT_EXIST = 'does_not_exist'
     ALREADY_QUEUED = 'already_queued'
@@ -355,3 +366,19 @@ class RawNftAttributeRarity(TypedDict):
     value: str
     trait_type: str
     prevalence: int
+
+
+class RawContractForOwner(RawNftContractMetadata):
+    address: HexAddress
+    totalBalance: int
+    numDistinctTokensOwned: int
+    isSpam: bool
+    tokenId: str
+    media: Media
+    opensea: NotRequired[RawOpenSeaCollectionMetadata]
+
+
+class RawContractsForOwnerResponse(TypedDict):
+    contracts: List[RawContractForOwner]
+    pageKey: NotRequired[str]
+    totalCount: int

@@ -25,6 +25,7 @@ from alchemy.nft.types import (
     OwnedNft,
     OwnedBaseNft,
     Media,
+    ContractsForOwnerResponse,
 )
 
 
@@ -145,6 +146,34 @@ def get_nft_contract_from_raw(raw_nft_contract: RawNftContract) -> NftContract:
             'deployedBlockNumber'
         ),
     )
+
+
+def get_contracts_for_owner_from_raw(
+    raw_contracts_for_owner,
+) -> ContractsForOwnerResponse:
+    contracts = list(parse_raw_contracts(raw_contracts_for_owner['contracts']))
+    total_count = raw_contracts_for_owner['totalCount']
+    page_key = raw_contracts_for_owner.get('pageKey')
+    return contracts, total_count, page_key
+
+
+def parse_raw_contracts(contracts):
+    for contract in contracts:
+        yield {
+            'address': contract['address'],
+            'totalSupply': contract.get('totalSupply'),
+            'isSpam': contract['isSpam'],
+            'media': contract['media'],
+            'numDistinctTokensOwned': contract['numDistinctTokensOwned'],
+            'tokenId': contract['tokenId'],
+            'totalBalance': contract['totalBalance'],
+            'name': contract.get('name'),
+            'openSea': parse_opensea_metadata(contract.get('opensea')),
+            'symbol': contract.get('symbol'),
+            'tokenType': parse_nft_token_type(contract.get('tokenType')),
+            'contractDeployer': contract.get('contractDeployer'),
+            'deployedBlockNumber': contract.get('deployedBlockNumber'),
+        }
 
 
 def is_nft_with_metadata(

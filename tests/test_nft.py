@@ -96,6 +96,51 @@ class TestAlchemyNFT(unittest.TestCase):
         self.assertTrue(owners[0].get('tokenBalances'))
         self.assertIsInstance(owners[0]['tokenBalances'][0]['balance'], int)
 
+    def test_get_contracts_for_owner(self):
+        owner = '0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D'
+        contracts, _, _ = self.alchemy.nft.get_contracts_for_owner(owner)
+        self.assertGreater(len(contracts), 0)
+        self.assertIsInstance(contracts[0]['totalSupply'], str)
+        self.assertIsInstance(contracts[0]['symbol'], str)
+        self.assertEqual(contracts[0]['tokenType'], NftTokenType.ERC721)
+        self.assertIsInstance(contracts[0]['name'], str)
+        self.assertIsNotNone(contracts[0]['openSea'])
+        self.assertIsNotNone(contracts[0]['openSea']['safelistRequestStatus'])
+        self.assertIsNotNone(
+            OpenSeaSafelistRequestStatus.return_value(
+                contracts[0]['openSea']['safelistRequestStatus']
+            )
+        )
+        self.assertIsInstance(contracts[0]['contractDeployer'], str)
+        self.assertIsInstance(contracts[0]['deployedBlockNumber'], int)
+
+    def test_get_contracts_for_owner_with_page_key(self):
+        owner = 'vitalik.eth'
+        contracts_1, total_count, page_key = self.alchemy.nft.get_contracts_for_owner(
+            owner
+        )
+        self.assertIsNotNone(page_key)
+        self.assertIsInstance(page_key, str)
+        contracts_2, _, _ = self.alchemy.nft.get_contracts_for_owner(
+            owner, page_key=page_key
+        )
+        self.assertNotEqual(contracts_2[0], contracts_1[0])
+
+    def test_get_contracts_for_owner_with_filters(self):
+        owner = '0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D'
+        contracts, _, _ = self.alchemy.nft.get_contracts_for_owner(
+            owner, include_filters=[NftFilters.SPAM]
+        )
+        for contract in contracts:
+            self.assertTrue(contract['isSpam'])
+
+        owner = '0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D'
+        contracts, _, _ = self.alchemy.nft.get_contracts_for_owner(
+            owner, exclude_filters=[NftFilters.SPAM]
+        )
+        for contract in contracts:
+            self.assertFalse(contract['isSpam'])
+
     def test_get_spam_contracts(self):
         resp = self.alchemy.nft.get_spam_contracts()
         self.assertTrue(resp)

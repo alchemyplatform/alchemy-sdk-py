@@ -37,6 +37,8 @@ from alchemy.nft.types import (
     OwnedBaseNft,
     OwnedNft,
     BaseNft,
+    ContractsForOwnerResponse,
+    RawContractsForOwnerResponse,
 )
 from alchemy.nft.utils import (
     get_nft_from_raw,
@@ -44,6 +46,7 @@ from alchemy.nft.utils import (
     parse_raw_nfts,
     parse_raw_nft_attribute_rarity,
     parse_raw_owned_nfts,
+    get_contracts_for_owner_from_raw,
 )
 from alchemy.types import HexAddress, AlchemyApiType
 from alchemy.utils import is_valid_address
@@ -353,6 +356,49 @@ class AlchemyNFT:
             block=block,
             pageKey=page_key,
         )
+
+    def get_contracts_for_owner(
+        self,
+        owner: HexAddress | ENS,
+        exclude_filters: Optional[List[NftFilters]] = None,
+        include_filters: Optional[List[NftFilters]] = None,
+        page_key: Optional[str] = None,
+        order_by: Optional[NftOrdering] = None,
+    ) -> ContractsForOwnerResponse:
+        """
+        Gets all NFT contracts held by the specified owner address.
+
+        :param owner:  Address for NFT owner (can be in ENS format!).
+        :param exclude_filters: Optional list of filters applied to the query.
+            NFTs that match one or more of these filters are excluded from the response.
+            May not be used in conjunction with include_filters parameter.
+        :param include_filters: Optional list of filters applied to the query.
+            NFTs that match one or more of these filters are included in the response.
+            May not be used in conjunction with exclude_filter parameter.
+        :param page_key: Key for pagination to use to fetch results from the next page if available.
+        :param order_by: Order in which to return results. By default, results
+            are ordered by contract address and token ID in lexicographic order.
+        :return: tuple (list of contracts, total_count, page_key)
+        """
+        if not is_valid_address(owner):
+            raise AlchemyError('Owner address or ENS is not valid')
+
+        params = {'owner': owner}
+        if exclude_filters:
+            params['excludeFilters[]'] = exclude_filters
+        if include_filters:
+            params['includeFilters[]'] = include_filters
+        if page_key:
+            params['pageKey'] = page_key
+        if order_by:
+            params['orderBy'] = order_by
+        response: RawContractsForOwnerResponse = api_request(
+            url=f'{self.url}/getContractsForOwner',
+            method_name='getContractsForOwner',
+            params=params,
+            config=self.config,
+        )
+        return get_contracts_for_owner_from_raw(response)
 
     def get_spam_contracts(self) -> List[str]:
         """
