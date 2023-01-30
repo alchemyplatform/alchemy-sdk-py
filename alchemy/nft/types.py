@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from typing import TypedDict, List, Union, Literal, Any, Optional, Tuple
+from typing import TypedDict, List, Union, Literal, Any, Optional
 
 from web3.types import ENS
 
@@ -158,8 +158,16 @@ class OwnedBaseNft(BaseNft):
     balance: int
 
 
-OwnedNftsResponse = Tuple[List[OwnedNft], int, Optional[str]]
-OwnedBaseNftsResponse = Tuple[List[OwnedBaseNft], int, Optional[str]]
+class OwnedNftsResponse(TypedDict):
+    ownedNfts: List[OwnedNft]
+    pageKey: NotRequired[str]
+    totalCount: int
+
+
+class OwnedBaseNftsResponse(TypedDict):
+    ownedNfts: List[OwnedBaseNft]
+    pageKey: NotRequired[str]
+    totalCount: int
 
 
 NftsAlchemyParams = TypedDict(
@@ -178,8 +186,15 @@ NftsAlchemyParams = TypedDict(
     total=False,
 )
 
-NftContractNftsResponse = Tuple[List[Nft], Optional[str]]
-NftContractBaseNftsResponse = Tuple[List[BaseNft], Optional[str]]
+
+class NftContractNftsResponse(TypedDict):
+    nfts: List[Nft]
+    pageKey: NotRequired[str]
+
+
+class NftContractBaseNftsResponse(TypedDict):
+    nfts: List[BaseNft]
+    pageKey: NotRequired[str]
 
 
 class NftsForContractAlchemyParams(TypedDict, total=False):
@@ -188,6 +203,10 @@ class NftsForContractAlchemyParams(TypedDict, total=False):
     withMetadata: Required[bool]
     limit: int
     tokenUriTimeoutInMs: int
+
+
+class OwnersForContractResponse(TypedDict):
+    owners: List[str]
 
 
 class NftContractTokenBalance(TypedDict):
@@ -200,10 +219,9 @@ class NftContractOwner(TypedDict):
     tokenBalances: List[NftContractTokenBalance]
 
 
-OwnersForContractResponse = Tuple[List[str], Optional[str]]
-OwnersForContractWithTokenBalancesResponse = Tuple[
-    List[NftContractOwner], Optional[str]
-]
+class OwnersForContractWithTokenBalancesResponse(TypedDict):
+    owners: List[NftContractOwner]
+    pageKey: NotRequired[str | None]
 
 
 class ContractForOwner(NftContract):
@@ -214,7 +232,10 @@ class ContractForOwner(NftContract):
     media: Media
 
 
-ContractsForOwnerResponse = Tuple[List[ContractForOwner], int, Optional[str]]
+class ContractsForOwnerResponse(TypedDict):
+    contracts: List[ContractForOwner]
+    pageKey: NotRequired[str | None]
+    totalCount: int
 
 
 class RefreshState(str, enum.Enum):

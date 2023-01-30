@@ -148,11 +148,11 @@ from alchemy.nft import NftFilters
 alchemy = Alchemy()
 
 # Get how many NFTs an address owns.
-nfts, total_count, page_key = alchemy.nft.get_nfts_for_owner('vitalik.eth')
-print(total_count)
+response = alchemy.nft.get_nfts_for_owner('vitalik.eth')
+print(response['totalCount'])
 
 # Get all the image urls for all the NFTs an address owns.
-for nft in nfts:
+for nft in response['ownedNfts']:
     print(nft.get('media'))
 
 # Filter out spam NFTs.
@@ -170,9 +170,8 @@ alchemy = Alchemy()
 bayc_address = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'
 
 # Omit the NFT metadata for smaller payloads.
-options = {'omitMetadata': True, 'pageSize': 5}
-nfts, page_key = alchemy.nft.get_nfts_for_contract(bayc_address, omit_metadata=True, page_size=5)
-for nft in nfts:
+response = alchemy.nft.get_nfts_for_contract(bayc_address, omit_metadata=True, page_size=5)
+for nft in response['nfts']:
     owners = alchemy.nft.get_owners_for_nft(
         contract_address=nft['contract']['address'], token_id=nft['tokenId']
     )

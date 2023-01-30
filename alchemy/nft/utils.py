@@ -25,7 +25,8 @@ from alchemy.nft.types import (
     OwnedNft,
     OwnedBaseNft,
     Media,
-    ContractsForOwnerResponse,
+    RawContractForOwner,
+    ContractForOwner,
 )
 
 
@@ -148,16 +149,7 @@ def get_nft_contract_from_raw(raw_nft_contract: RawNftContract) -> NftContract:
     )
 
 
-def get_contracts_for_owner_from_raw(
-    raw_contracts_for_owner,
-) -> ContractsForOwnerResponse:
-    contracts = list(parse_raw_contracts(raw_contracts_for_owner['contracts']))
-    total_count = raw_contracts_for_owner['totalCount']
-    page_key = raw_contracts_for_owner.get('pageKey')
-    return contracts, total_count, page_key
-
-
-def parse_raw_contracts(contracts):
+def parse_raw_contracts(contracts: List[RawContractForOwner]) -> ContractForOwner:
     for contract in contracts:
         yield {
             'address': contract['address'],

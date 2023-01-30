@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, List, overload, Literal, Tuple, Any
+from typing import Optional, List, overload, Literal, Any
 
 from alchemy.config import AlchemyConfig
 from alchemy.dispatch import api_request
@@ -34,11 +34,9 @@ from alchemy.nft.types import (
     RawNft,
     NftFilters,
     NftOrdering,
-    OwnedBaseNft,
-    OwnedNft,
-    BaseNft,
     ContractsForOwnerResponse,
     RawContractsForOwnerResponse,
+    ContractForOwner,
 )
 from alchemy.nft.utils import (
     get_nft_from_raw,
@@ -46,7 +44,7 @@ from alchemy.nft.utils import (
     parse_raw_nfts,
     parse_raw_nft_attribute_rarity,
     parse_raw_owned_nfts,
-    get_contracts_for_owner_from_raw,
+    parse_raw_contracts,
 )
 from alchemy.types import HexAddress, AlchemyApiType
 from alchemy.utils import is_valid_address
@@ -114,12 +112,12 @@ class AlchemyNFT:
         page_size: Optional[int] = None,
         token_uri_timeout: Optional[int] = None,
         order_by: Optional[NftOrdering] = None,
-    ) -> Tuple[List[OwnedNft], int, Optional[str]]:
+    ) -> OwnedNftsResponse:
         """
         Get all NFTs for an owner.
 
         This method returns the full NFTs in the contract. To get all NFTs without
-        their associated metadata, use BaseNftsForOwnerOptions.
+        their associated metadata, set omit_metadata to `True`.
 
         :param owner: The address of the owner.
         :param omit_metadata: Optional boolean flag to omit NFT metadata.
@@ -139,7 +137,7 @@ class AlchemyNFT:
             not live fetch any metadata for cache misses then set this value to 0.
         :param order_by: Order in which to return results. By default, results are
             ordered by contract address and token ID in lexicographic order.
-        :return: tuple (list of owned NFTs, total nfts count, page key)
+        :return: OwnedNftsResponse
         """
         ...
 
@@ -155,12 +153,12 @@ class AlchemyNFT:
         page_size: Optional[int] = None,
         token_uri_timeout: Optional[int] = None,
         order_by: Optional[NftOrdering] = None,
-    ) -> OwnedNftsResponse:
+    ) -> OwnedBaseNftsResponse:
         """
         Get all base NFTs for an owner.
 
-        This method returns the base NFTs that omit the associated metadata.
-        To get all NFTs with their associated metadata, use NftsForOwnerOptions.
+        This method returns the base NFTs that omit the associated metadata. To get
+        all NFTs with their associated metadata, set omit_metadata to `False`.
 
         :param owner: The address of the owner.
         :param omit_metadata: Optional boolean flag to omit NFT metadata.
@@ -180,7 +178,7 @@ class AlchemyNFT:
             not live fetch any metadata for cache misses then set this value to 0.
         :param order_by: Order in which to return results. By default, results are
             ordered by contract address and token ID in lexicographic order.
-        :return: tuple (list of owned Base NFTs, total nfts count, page key)
+        :return: OwnedBaseNftsResponse
         """
         ...
 
@@ -195,7 +193,7 @@ class AlchemyNFT:
         page_size: Optional[int] = None,
         token_uri_timeout: Optional[int] = None,
         order_by: Optional[NftOrdering] = None,
-    ) -> OwnedBaseNftsResponse:
+    ) -> [OwnedNftsResponse | OwnedBaseNftsResponse]:
         return self._get_nfts_for_owner(
             owner,
             omitMetadata=omit_metadata,
@@ -241,7 +239,7 @@ class AlchemyNFT:
             this parameter is the timeout (in milliseconds) for the website hosting
             the metadata to respond. If you want to only access the cache and
             not live fetch any metadata for cache misses then set this value to 0.
-        :return: tuple (Nft, page key)
+        :return: NftContractNftsResponse
         """
         ...
 
@@ -269,7 +267,7 @@ class AlchemyNFT:
             this parameter is the timeout (in milliseconds) for the website hosting
             the metadata to respond. If you want to only access the cache and
             not live fetch any metadata for cache misses then set this value to 0.
-        :return: tuple (BaseNft, page key)
+        :return: NftContractBaseNftsResponse
         """
         ...
 
@@ -317,7 +315,7 @@ class AlchemyNFT:
             Defaults to false when omitted.
         :param block: The block number to fetch owners for.
         :param page_key:  Optional page key to paginate the next page for large requests.
-        :return: tuple (list of owners, page key)
+        :return: OwnersForContractResponse
         """
         ...
 
@@ -339,7 +337,7 @@ class AlchemyNFT:
             Defaults to False when omitted.
         :param block: The block number to fetch owners for.
         :param page_key:  Optional page key to paginate the next page for large requests.
-        :return: tuple (list of NftContractOwner, page key)
+        :return: OwnersForContractWithTokenBalancesResponse
         """
         ...
 
@@ -378,7 +376,7 @@ class AlchemyNFT:
         :param page_key: Key for pagination to use to fetch results from the next page if available.
         :param order_by: Order in which to return results. By default, results
             are ordered by contract address and token ID in lexicographic order.
-        :return: tuple (list of contracts, total_count, page_key)
+        :return: ContractsForOwnerResponse
         """
         if not is_valid_address(owner):
             raise AlchemyError('Owner address or ENS is not valid')
@@ -398,7 +396,12 @@ class AlchemyNFT:
             params=params,
             config=self.config,
         )
-        return get_contracts_for_owner_from_raw(response)
+        result: ContractsForOwnerResponse = {
+            'contracts': list(parse_raw_contracts(response['contracts'])),
+            'totalCount': response['totalCount'],
+            'pageKey': response.get('pageKey'),
+        }
+        return result
 
     def get_spam_contracts(self) -> List[str]:
         """
@@ -537,11 +540,13 @@ class AlchemyNFT:
             params=params,
             config=self.config,
         )
-        owned_nfts: List[OwnedNft] | List[OwnedBaseNft] = list(parse_raw_owned_nfts(response['ownedNfts']))  # type: ignore
-        total_count = response['totalCount']
-        page_key = response.get('pageKey')
-
-        return owned_nfts, total_count, page_key
+        owned_nft: OwnedNftsResponse | OwnedBaseNftsResponse = {
+            'ownedNfts': list(parse_raw_owned_nfts(response['ownedNfts'])),
+            'totalCount': response['totalCount'],
+        }
+        if response.get('pageKey'):
+            owned_nft['pageKey'] = response['pageKey']
+        return owned_nft
 
     def _get_contract_metadata(
         self, contract_address: HexAddress, src_method: str = 'getContractMetadata'
@@ -578,9 +583,11 @@ class AlchemyNFT:
                 config=self.config,
             )
         )
-        nfts: List[Nft] | List[BaseNft] = list(parse_raw_nfts(response['nfts'], contract_address))  # type: ignore
-        page_key = response.get('nextToken')
-        return nfts, page_key
+        result: NftContractNftsResponse | NftContractBaseNftsResponse = {
+            'nfts': list(parse_raw_nfts(response['nfts'], contract_address)),
+            'pageKey': response.get('nextToken'),
+        }
+        return result
 
     def _get_owners_for_nft(
         self,
@@ -608,6 +615,7 @@ class AlchemyNFT:
             params={**options, 'contractAddress': contract_address},
             config=self.config,
         )
-        owners = response.get('ownerAddresses', [])
-        page_key = response.get('pageKey')
-        return owners, page_key
+        result = {'owners': response['ownerAddresses']}
+        if response.get('pageKey'):
+            result['pageKey'] = response['pageKey']
+        return result
