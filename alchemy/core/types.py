@@ -62,10 +62,14 @@ class AssetTransfersWithMetadataResult(AssetTransfersResult):
     metadata: AssetTransfersMetadata
 
 
-AssetTransfersResponse = Tuple[List[AssetTransfersResult], Optional[str]]
-AssetTransfersWithMetadataResponse = Tuple[
-    List[AssetTransfersWithMetadataResult], Optional[str]
-]
+class AssetTransfersResponse(TypedDict):
+    transfers: List[AssetTransfersResult]
+    pageKey: NotRequired[str]
+
+
+class AssetTransfersWithMetadataResponse(TypedDict):
+    transfers: List[AssetTransfersWithMetadataResult]
+    pageKey: NotRequired[str]
 
 
 class TokenBalanceType(str, enum.Enum):

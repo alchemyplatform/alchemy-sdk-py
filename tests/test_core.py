@@ -37,7 +37,7 @@ class TestAlchemyCore(unittest.TestCase):
 
     def test_get_asset_transfers(self):
         bayc_contract = '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d'
-        all_transfers, _ = self.alchemy.core.get_asset_transfers(
+        response = self.alchemy.core.get_asset_transfers(
             from_block=16192515,
             contract_addresses=[bayc_contract],
             to_address='0x2916768F1FEA936B6C69830B8E1E3BAD5E612255'.lower(),
@@ -45,6 +45,7 @@ class TestAlchemyCore(unittest.TestCase):
             category=['erc721'],
             with_metadata=True,
         )
+        all_transfers = response['transfers']
         self.assertTrue(all_transfers)
         first_transfer = all_transfers[0]
         self.assertEqual(first_transfer['category'], 'erc721')

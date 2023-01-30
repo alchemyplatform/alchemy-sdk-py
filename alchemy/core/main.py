@@ -290,9 +290,7 @@ class AlchemyCore(Eth):
             params=[params],
             method_name='getAssetTransfers',
         )
-        transfers = response['result'].get('transfers')
-        page_key = response['result'].get('pageKey')
-        return transfers, page_key
+        return response['result']
 
     def get_transaction_receipts(
         self,
