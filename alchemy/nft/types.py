@@ -3,8 +3,6 @@ from __future__ import annotations
 import enum
 from typing import TypedDict, List, Union, Literal, Any, Optional
 
-from web3.types import ENS
-
 from alchemy.exceptions import AlchemyError
 from alchemy.types import HexAddress
 
@@ -170,23 +168,6 @@ class OwnedBaseNftsResponse(TypedDict):
     totalCount: int
 
 
-NftsAlchemyParams = TypedDict(
-    'NftsAlchemyParams',
-    {
-        'owner': Required[Union[HexAddress, ENS]],
-        'pageKey': str,
-        'contractAddresses': List[HexAddress],
-        'excludeFilters[]': List[NftFilters],
-        'includeFilters[]': List[NftFilters],
-        'pageSize': int,
-        'withMetadata': Required[bool],
-        'tokenUriTimeoutInMs': int,
-        'orderBy': str,
-    },
-    total=False,
-)
-
-
 class NftContractNftsResponse(TypedDict):
     nfts: List[Nft]
     pageKey: NotRequired[str]
@@ -238,6 +219,23 @@ class ContractsForOwnerResponse(TypedDict):
     totalCount: int
 
 
+# syntax: "from" keyword not allowed in class construction
+TransferredNft = TypedDict(
+    'TransferredNft',
+    {
+        'from': HexAddress,
+        'to': Optional[HexAddress],
+        'transactionHash': str,
+        'blockNumber': str,
+    },
+)
+
+
+class TransfersNftResponse(TypedDict):
+    nfts: List[TransferredNft]
+    pageKey: NotRequired[str | None]
+
+
 class RefreshState(str, enum.Enum):
     DOES_NOT_EXIST = 'does_not_exist'
     ALREADY_QUEUED = 'already_queued'
@@ -283,6 +281,12 @@ class NftAttributeRarity(TypedDict):
     value: str
     traitType: str
     prevalence: int
+
+
+class NftMetadataBatchToken(TypedDict):
+    contractAddress: str
+    tokenId: TokenID
+    tokenType: NotRequired[Literal[NftTokenType.ERC1155] | Literal[NftTokenType.ERC721]]
 
 
 class RawNftTokenMetadata(TypedDict):

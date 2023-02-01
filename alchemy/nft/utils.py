@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import cast
 
+from alchemy.core.types import AssetTransfersCategory
 from alchemy.types import HexAddress
 from alchemy.exceptions import AlchemyError
 from alchemy.nft.types import (
@@ -80,12 +81,6 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
         token_type = parse_nft_token_type(
             raw_nft['id'].get('tokenMetadata', {}).get('tokenType', '')
         )
-        spam_info = None
-        if raw_nft.get('spamInfo'):
-            spam_info = SpamInfo(
-                isSpam=bool(raw_nft['spamInfo']['isSpam']),
-                classifications=raw_nft['spamInfo']['classifications'],
-            )
         contract_metadata = raw_nft.get('contractMetadata', {})
         contract = NftContract(
             address=raw_nft['contract']['address'],
@@ -97,8 +92,7 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
             contractDeployer=contract_metadata.get('contractDeployer'),
             deployedBlockNumber=contract_metadata.get('deployedBlockNumber'),
         )
-
-        return Nft(
+        nft = Nft(
             contract=contract,
             tokenId=str(raw_nft['id']['tokenId']),
             tokenType=token_type,
@@ -109,8 +103,13 @@ def get_nft_from_raw(raw_nft: RawNft) -> Nft:
             rawMetadata=raw_nft.get('metadata'),
             tokenUri=parse_nft_token_uri(raw_nft.get('tokenUri')),
             media=parse_nft_token_uri_list(raw_nft.get('media')),
-            spamInfo=spam_info,
         )
+        if raw_nft.get('spamInfo'):
+            nft['spamInfo'] = SpamInfo(
+                isSpam=bool(raw_nft['spamInfo']['isSpam']),
+                classifications=raw_nft['spamInfo']['classifications'],
+            )
+        return nft
     except Exception as e:
         raise AlchemyError(f'Error parsing the NFT response: {e}')
 
@@ -207,3 +206,47 @@ def parse_raw_nft_attribute_rarity(
             traitType=raw_rarity['trait_type'],
             prevalence=raw_rarity['prevalence'],
         )
+
+
+def token_type_to_category(
+    token_type: Optional[NftTokenType] = None,
+) -> List[AssetTransfersCategory]:
+    if token_type == NftTokenType.ERC721:
+        return [AssetTransfersCategory.ERC721]
+    elif token_type == NftTokenType.ERC1155:
+        return [AssetTransfersCategory.ERC1155]
+    else:
+        return [
+            AssetTransfersCategory.ERC721,
+            AssetTransfersCategory.ERC1155,
+            AssetTransfersCategory.SPECIALNFT,
+        ]
+
+
+def get_tokens_from_transfers(transfers):
+    for transfer in transfers:
+        if not transfer['rawContract'].get('address'):
+            continue
+
+        metadata = {
+            'from': transfer['from'],
+            'to': transfer.get('to'),
+            'transactionHash': transfer['hash'],
+            'blockNumber': transfer['blockNum'],
+        }
+        if transfer['category'] == AssetTransfersCategory.ERC1155:
+            for meta in transfer['erc1155Metadata']:
+                token = {
+                    'contractAddress': transfer['rawContract']['address'],
+                    'tokenId': meta['tokenId'],
+                    'tokenType': NftTokenType.ERC1155,
+                }
+                yield {'metadata': metadata, 'token': token}
+        else:
+            token = {
+                'contractAddress': transfer['rawContract']['address'],
+                'tokenId': transfer['tokenId'],
+            }
+            if transfer['category'] == AssetTransfersCategory.ERC721:
+                token['tokenType'] = NftTokenType.ERC721
+            yield {'metadata': metadata, 'token': token}

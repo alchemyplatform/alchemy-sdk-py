@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import enum
-from typing import TypedDict, List, Union, Optional, Literal, Tuple
+from typing import TypedDict, List, Union, Optional, Literal
 
 from eth_typing import HexStr
 from web3.types import TxReceipt, LatestBlockParam
 from typing_extensions import NotRequired
-from alchemy.types import HexAddress
+from alchemy.types import HexAddress, AssetTransfersCategory
 
-
-AssetTransfersCategory = Literal[
-    'external', 'internal', 'erc20', 'erc721', 'erc1155', 'specialnft'
-]
 SortingOrder = Literal['asc', 'desc']
 BlockIdentifier = Union[HexStr, int, LatestBlockParam]
 

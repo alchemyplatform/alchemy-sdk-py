@@ -3,6 +3,7 @@ import unittest
 
 from alchemy import Alchemy
 from alchemy.core.types import TokenBalanceType
+from alchemy.types import AssetTransfersCategory
 
 
 class TestAlchemyCore(unittest.TestCase):
@@ -40,9 +41,9 @@ class TestAlchemyCore(unittest.TestCase):
         response = self.alchemy.core.get_asset_transfers(
             from_block=16192515,
             contract_addresses=[bayc_contract],
-            to_address='0x2916768F1FEA936B6C69830B8E1E3BAD5E612255'.lower(),
+            to_address='0x2916768f1fea936b6c69830b8e1e3bad5e612255',
             exclude_zero_value=True,
-            category=['erc721'],
+            category=[AssetTransfersCategory.ERC721],
             with_metadata=True,
         )
         all_transfers = response['transfers']

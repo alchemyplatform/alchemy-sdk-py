@@ -48,4 +48,7 @@ class AlchemyProvider(JSONBaseProvider):
             response = self.decode_rpc_response(raw_response)
         except HTTPError as err:
             raise AlchemyError(str(err)) from err
+
+        if response.get('error'):
+            raise AlchemyError(response['error'])
         return response

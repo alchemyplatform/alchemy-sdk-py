@@ -7,7 +7,7 @@ from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus, NftFil
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
+        self.alchemy = Alchemy(api_key='lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
 
     def test_get_nft_metadata(self):
         contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'
@@ -16,6 +16,33 @@ class TestAlchemyNFT(unittest.TestCase):
             contract_address, token_id, NftTokenType.ERC721
         )
         self.assertIsNotNone(resp.get('media'))
+
+    def test_get_nft_metadata_batch(self):
+        tokens = [
+            {
+                'contractAddress': '0x0510745d2ca36729bed35c818527c4485912d99e',
+                'tokenId': 403,
+                'tokenType': NftTokenType.ERC721,
+            },
+            {
+                'contractAddress': '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d',
+                'tokenId': 5304,
+            },
+        ]
+        resp = self.alchemy.nft.get_nft_metadata_batch(tokens=tokens)
+        self.assertTrue(resp)
+        self.assertTrue(resp[0].get('contract'))
+
+    def test_get_minted_nfts(self):
+        owner = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+        resp = self.alchemy.nft.get_minted_nfts(owner=owner)
+        self.assertIsNotNone(resp.get('pageKey'))
+        self.assertIsNotNone(resp.get('nfts'))
+        self.assertGreater(len(resp['nfts']), 0)
+
+        resp_2 = self.alchemy.nft.get_minted_nfts(owner=owner, page_key=resp['pageKey'])
+        self.assertGreater(len(resp_2['nfts']), 0)
+        self.assertNotEqual(resp['nfts'], resp_2['nfts'])
 
     def test_get_nfts_for_owner(self):
         owner = '0xshah.eth'

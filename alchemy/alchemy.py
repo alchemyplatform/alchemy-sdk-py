@@ -212,7 +212,7 @@ class Alchemy:
         self.provider = AlchemyProvider(self.config)
         web3 = Web3(provider=self.provider)
         self.core = AlchemyCore(web3)
-        self.nft = AlchemyNFT(self.config)
+        self.nft = AlchemyNFT(web3)
         self.transact = AlchemyTransact(web3)
 
     def isConnected(self) -> bool:

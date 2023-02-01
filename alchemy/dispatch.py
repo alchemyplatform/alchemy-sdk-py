@@ -1,11 +1,12 @@
 import random
-from typing import Any
+from typing import Any, Optional
 
 import backoff as backoff
 import requests
 from requests import HTTPError
 
 from alchemy.__version__ import __version__
+from alchemy.config import AlchemyConfig
 from alchemy.exceptions import AlchemyError
 
 DEFAULT_BACKOFF_MULTIPLIER = 1.5
@@ -17,6 +18,8 @@ def jitter(value: float) -> float:
 
 
 def parse_params(params):
+    if not params:
+        return None
     d = params.copy()
     for key, value in d.items():
         if isinstance(value, bool):
@@ -24,13 +27,14 @@ def parse_params(params):
     return params
 
 
-def api_request(url: str, method_name: str, params: Any, **options: Any) -> Any:
+def api_request(
+    url: str, method_name: str, config: AlchemyConfig, **options: Any
+) -> Any:
     headers = {
         **options.get('headers', {}),
         'Alchemy-Ethers-Sdk-Method': method_name,
         'Alchemy-Ethers-Sdk-Version': __version__,
     }
-    config = options.get('config', {})
 
     @backoff.on_exception(
         wait_gen=options.get('wait_gen', backoff.expo),
@@ -43,7 +47,8 @@ def api_request(url: str, method_name: str, params: Any, **options: Any) -> Any:
         response = requests.request(
             method=rest_method,
             url=url,
-            params=parse_params(params),
+            params=parse_params(options.get('params')),
+            json=options.get('data'),
             headers=headers,
             timeout=config.request_timeout,
         )

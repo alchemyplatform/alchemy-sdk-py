@@ -1,8 +1,11 @@
+import enum
 from typing import Union
 from eth_typing import HexStr
 from enum import Enum
 
 HexAddress = Union[HexStr, str]
+
+ETH_NULL_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 
 class Network(str, Enum):
@@ -25,6 +28,18 @@ class AlchemyApiType(str, Enum):
     BASE = 0
     NFT = 1
     WEBHOOK = 2
+
+    def __str__(self) -> str:
+        return str.__str__(self)
+
+
+class AssetTransfersCategory(str, enum.Enum):
+    EXTERNAL = 'external'
+    INTERNAL = 'internal'
+    ERC20 = 'erc20',
+    ERC721 = 'erc721',
+    ERC1155 = 'erc1155',
+    SPECIALNFT = 'specialnft'
 
     def __str__(self) -> str:
         return str.__str__(self)

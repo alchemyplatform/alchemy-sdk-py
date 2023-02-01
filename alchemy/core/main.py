@@ -15,12 +15,12 @@ from alchemy.core.types import (
     AssetTransfersWithMetadataResponse,
     TokenBalanceType,
     SortingOrder,
-    AssetTransfersCategory,
     BlockIdentifier,
     TxReceiptsResponse,
 )
 from alchemy.exceptions import AlchemyError
 from alchemy.provider import AlchemyProvider
+from alchemy.types import AssetTransfersCategory
 from alchemy.utils import is_valid_address
 
 
@@ -163,15 +163,16 @@ class AlchemyCore(Eth):
         self,
         category: List[AssetTransfersCategory],
         with_metadata: Literal[False] = False,
-        from_block: Optional[BlockIdentifier] = 0x0,
-        to_block: Optional[BlockIdentifier] = 'latest',
-        from_address: Optional[HexAddress | ENS] = None,
-        to_address: Optional[HexAddress | ENS] = None,
-        contract_addresses: List[HexAddress] = None,
-        order: SortingOrder = 'asc',
-        exclude_zero_value: bool = True,
-        max_count: Optional[int | HexStr] = 1000,
-        page_key: Optional[str] = None,
+        from_block: BlockIdentifier = ...,
+        to_block: BlockIdentifier = ...,
+        from_address: HexAddress | ENS = ...,
+        to_address: HexAddress | ENS = ...,
+        contract_addresses: List[HexAddress] = ...,
+        order: SortingOrder = ...,
+        exclude_zero_value: bool = ...,
+        max_count: int | HexStr = ...,
+        page_key: str = ...,
+        **kwargs: Any,
     ) -> AssetTransfersResponse:
         """
         Get transactions for specific addresses. See the web documentation for the
@@ -207,15 +208,16 @@ class AlchemyCore(Eth):
         self,
         category: List[AssetTransfersCategory],
         with_metadata: Literal[True],
-        from_block: Optional[BlockIdentifier] = 0x0,
-        to_block: Optional[BlockIdentifier] = 'latest',
-        from_address: Optional[HexAddress | ENS] = None,
-        to_address: Optional[HexAddress | ENS] = None,
-        contract_addresses: List[HexAddress] = None,
-        order: SortingOrder = 'asc',
-        exclude_zero_value: bool = True,
-        max_count: Optional[int | HexStr] = 1000,
-        page_key: Optional[str] = None,
+        from_block: BlockIdentifier = ...,
+        to_block: BlockIdentifier = ...,
+        from_address: HexAddress | ENS = ...,
+        to_address: HexAddress | ENS = ...,
+        contract_addresses: List[HexAddress] = ...,
+        order: SortingOrder = ...,
+        exclude_zero_value: bool = ...,
+        max_count: int | HexStr = ...,
+        page_key: str = ...,
+        **kwargs: Any,
     ) -> AssetTransfersWithMetadataResponse:
         """
         Get transactions for specific addresses. See the web documentation for the
@@ -253,15 +255,16 @@ class AlchemyCore(Eth):
         self,
         category: List[AssetTransfersCategory],
         with_metadata: bool = False,
-        from_block: Optional[BlockIdentifier] = 0x0,
-        to_block: Optional[BlockIdentifier] = 'latest',
+        from_block: BlockIdentifier = 0x0,
+        to_block: BlockIdentifier = 'latest',
         from_address: Optional[HexAddress | ENS] = None,
         to_address: Optional[HexAddress | ENS] = None,
-        contract_addresses: List[HexAddress] = None,
+        contract_addresses: Optional[List[HexAddress]] = None,
         order: SortingOrder = 'asc',
         exclude_zero_value: bool = True,
-        max_count: Optional[int | HexStr] = 1000,
+        max_count: int | HexStr = 1000,
         page_key: Optional[str] = None,
+        **kwargs: Any,
     ) -> AssetTransfersResponse | AssetTransfersWithMetadataResponse:
         params = {
             'category': category,
@@ -288,7 +291,7 @@ class AlchemyCore(Eth):
         response = self.provider.make_request(
             method='alchemy_getAssetTransfers',
             params=[params],
-            method_name='getAssetTransfers',
+            method_name=kwargs.get('src_method', 'getAssetTransfers'),
         )
         return response['result']
 
