@@ -7,7 +7,7 @@ from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus, NftFil
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy(api_key='lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
+        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
 
     def test_get_nft_metadata(self):
         contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'
@@ -15,7 +15,9 @@ class TestAlchemyNFT(unittest.TestCase):
         resp = self.alchemy.nft.get_nft_metadata(
             contract_address, token_id, NftTokenType.ERC721
         )
-        self.assertIsNotNone(resp.get('media'))
+        self.assertIsNotNone(resp.media)
+        self.assertIsNotNone(resp.contract.name)
+        self.assertIsNotNone(resp.raw_metadata)
 
     def test_get_nft_metadata_batch(self):
         tokens = [

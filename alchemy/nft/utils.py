@@ -250,3 +250,9 @@ def get_tokens_from_transfers(transfers):
             if transfer['category'] == AssetTransfersCategory.ERC721:
                 token['tokenType'] = NftTokenType.ERC721
             yield {'metadata': metadata, 'token': token}
+
+
+def dict_reduce(parent_dict, child_dict):
+    for key in child_dict.keys():
+        parent_dict.pop(key, None)
+    return parent_dict

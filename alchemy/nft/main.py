@@ -9,6 +9,7 @@ from web3.types import ENS
 from alchemy.core import AlchemyCore
 from alchemy.dispatch import api_request
 from alchemy.exceptions import AlchemyError
+from alchemy.nft.models import NftClass
 from alchemy.nft.types import (
     TokenID,
     NftTokenType,
@@ -93,7 +94,7 @@ class AlchemyNFT:
         token_type: Optional[NftTokenType] = None,
         token_uri_timeout: Optional[int] = None,
         refresh_cache: bool = False,
-    ) -> Nft:
+    ) -> NftClass:
         """
         Get the NFT metadata associated with the provided parameters.
 
@@ -564,7 +565,7 @@ class AlchemyNFT:
         token_uri_timeout: Optional[int],
         refresh_cache: bool,
         src_method: str = 'getNftMetadata',
-    ) -> Nft:
+    ) -> NftClass:
         params: NftMetadataParams = {
             'contractAddress': contract_address,
             'tokenId': str(token_id),
@@ -582,7 +583,7 @@ class AlchemyNFT:
             params=params,
             config=self.provider.config,
         )
-        return get_nft_from_raw(response)
+        return NftClass.from_raw(response)
 
     def _get_nft_metadata_batch(
         self,
