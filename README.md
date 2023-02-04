@@ -78,7 +78,7 @@ alchemy.core.get_transaction_receipts(block_hash=block_hash)
 
 # Access the Alchemy NFT API. Gets contract metadata for NFT and gets collection name
 contract = "0x01234567bac6ff94d7e4f0ee23119cf848f93245"
-alchemy.nft.get_contract_metadata(contract)["openSea"].get("collectionName")
+print(alchemy.nft.get_contract_metadata(contract).opensea.collection_name)
 ```
 
 The Alchemy class also supports static methods from Web3 object that streamline the development process:
@@ -104,11 +104,14 @@ The SDK currently supports the following [NFT API](https://docs.alchemy.com/alch
 under the `alchemy.nft` namespace:
 
 - `get_nft_metadata()`: Get the NFT metadata for an NFT contract address and tokenId.
-- `get_contract_metadata()`: Get the metadata associated with an NFT contract
+- `get_nft_metada_batch()`: Get the NFT metadata for multiple NFT contract addresses/token id pairs.
+- `get_contract_metadata()`: Get the metadata associated with an NFT contract.
+- `get_contracts_for_owner()`: Get all NFT contracts that the provided owner address owns.
 - `get_nfts_for_owner()`: Get NFTs for an owner address.
 - `get_nfts_for_contract()`: Get all NFTs for a contract address.
 - `get_owners_for_nft()`: Get all the owners for a given NFT contract address and a particular token ID.
 - `get_owners_for_contract()`: Get all the owners for a given NFT contract address.
+- `get_minted_nfts()`: Get all the NFTs minted by the owner address.
 - `is_spam_contract()`: Check whether the given NFT contract address is a spam contract as defined by Alchemy (see the [NFT API FAQ](https://docs.alchemy.com/alchemy/enhanced-apis/nft-api/nft-api-faq#nft-spam-classification))
 - `get_spam_contracts()`: Returns a list of all spam contracts marked by Alchemy.
 - `refresh_contract()`: Enqueues the specified contract address to have all token ids' metadata refreshed.
@@ -128,9 +131,9 @@ differences compared to the Alchemy REST endpoints:
 - Methods referencing `Collection` have been renamed to use the name `Contract` for greater accuracy: e.g. `get_nfts_for_contract`.
 - Some methods have different naming that the REST API counterparts in order to provide a consistent API interface (
   e.g. `get_nfts_for_owner()` is `alchemy_getNfts`, `get_owners_for_nft()` is `alchemy_getOwnersForToken`).
-- SDK standardizes to `omitMetadata` parameter (vs. `withMetadata`).
-- Standardization to `pageKey` parameter for pagination (vs. `nextToken`/`startToken`)
-- Empty `TokenUri` fields are omitted.
+- SDK standardizes to `omit_metadata` parameter (vs. `withMetadata`).
+- Standardization to `page_key` parameter for pagination (vs. `nextToken`/`startToken`)
+- Empty `token_uri` fields are omitted.
 - Token ID is always normalized to an integer string on `BaseNft` and `Nft`.
 - Some fields omitted in the REST response are included in the SDK response in order to return an `Nft` object.
 - Some fields in the SDK's `Nft` object are named differently than the REST response.
@@ -149,11 +152,11 @@ alchemy = Alchemy()
 
 # Get how many NFTs an address owns.
 response = alchemy.nft.get_nfts_for_owner('vitalik.eth')
-print(response['totalCount'])
+print(response['total_count'])
 
 # Get all the image urls for all the NFTs an address owns.
-for nft in response['ownedNfts']:
-    print(nft.get('media'))
+for nft in response['owned_nfts']:
+    print(nft.media)
 
 # Filter out spam NFTs.
 nfts_without_spam = alchemy.nft.get_nfts_for_owner('vitalik.eth', exclude_filters=[NftFilters.SPAM])
@@ -173,9 +176,9 @@ bayc_address = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'
 response = alchemy.nft.get_nfts_for_contract(bayc_address, omit_metadata=True, page_size=5)
 for nft in response['nfts']:
     owners = alchemy.nft.get_owners_for_nft(
-        contract_address=nft['contract']['address'], token_id=nft['tokenId']
+        contract_address=nft.contract.address, token_id=nft.token_id
     )
-    print(f"owners: {owners}, tokenId: {nft['tokenId']}")
+    print(f"owners: {owners}, tokenId: {nft.token_id}")
 ```
 
 ### Get all outbound transfers for a provided address
