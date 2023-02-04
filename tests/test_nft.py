@@ -7,7 +7,8 @@ from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus, NftFil
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
+        # self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
+        self.alchemy = Alchemy(api_key='lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
 
     def test_get_nft_metadata(self):
         contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'
@@ -33,7 +34,7 @@ class TestAlchemyNFT(unittest.TestCase):
         ]
         resp = self.alchemy.nft.get_nft_metadata_batch(tokens=tokens)
         self.assertTrue(resp)
-        self.assertTrue(resp[0].get('contract'))
+        self.assertTrue(resp[0].contract)
 
     def test_get_minted_nfts(self):
         owner = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
@@ -51,44 +52,44 @@ class TestAlchemyNFT(unittest.TestCase):
         response = self.alchemy.nft.get_nfts_for_owner(
             owner, page_size=30, omit_metadata=False
         )
-        owned_nfts = response['ownedNfts']
+        owned_nfts = response['owned_nfts']
 
         self.assertTrue(owned_nfts)
         self.assertEqual(len(owned_nfts), 30)
 
-        nft_with_metadata = next(nft for nft in owned_nfts if nft.get('title'))
-        self.assertTrue(nft_with_metadata.get('contract'))
-        self.assertTrue(nft_with_metadata['contract'].get('openSea'))
+        nft_with_metadata = next(nft for nft in owned_nfts if nft.title)
+        self.assertTrue(nft_with_metadata.contract)
+        self.assertTrue(nft_with_metadata.contract.opensea)
 
     def test_get_nfts_for_owner_spam(self):
         owner = 'vitalik.eth'
         response = self.alchemy.nft.get_nfts_for_owner(owner)
-        nfts_with_spam = response['ownedNfts']
-        total_count_with_spam = response['totalCount']
+        nfts_with_spam = response['owned_nfts']
+        total_count_with_spam = response['total_count']
 
         response = self.alchemy.nft.get_nfts_for_owner(
             owner, exclude_filters=[NftFilters.SPAM]
         )
-        total_count_no_spam = response['totalCount']
+        total_count_no_spam = response['total_count']
 
         self.assertNotEqual(total_count_with_spam, total_count_no_spam)
-        spam_nft = next(nft for nft in nfts_with_spam if nft.get('spamInfo'))
-        self.assertEqual(spam_nft['spamInfo'].get('isSpam'), True)
-        self.assertTrue(spam_nft['spamInfo'].get('classifications'))
+        spam_nft = next(nft for nft in nfts_with_spam if nft.spam_info)
+        self.assertEqual(spam_nft.spam_info.is_spam, True)
+        self.assertTrue(spam_nft.spam_info.classifications)
 
     def test_get_contract_metadata(self):
         contract_address = '0x01234567bac6ff94d7e4f0ee23119cf848f93245'
         resp = self.alchemy.nft.get_contract_metadata(contract_address)
         self.assertTrue(resp)
-        self.assertIsInstance(resp['totalSupply'], str)
-        self.assertIsInstance(resp['symbol'], str)
-        self.assertEqual(resp['tokenType'], NftTokenType.ERC721)
-        self.assertEqual(resp['address'], contract_address)
-        self.assertIsNotNone(resp.get('openSea'))
-        self.assertIsNotNone(resp['openSea'].get('safelistRequestStatus'))
+        self.assertIsInstance(resp.total_supply, str)
+        self.assertIsInstance(resp.symbol, str)
+        self.assertEqual(resp.token_type, NftTokenType.ERC721)
+        self.assertEqual(resp.address, contract_address)
+        self.assertIsNotNone(resp.opensea)
+        self.assertIsNotNone(resp.opensea.safelist_request_status)
         self.assertIsNotNone(
             OpenSeaSafelistRequestStatus.return_value(
-                resp['openSea']['safelistRequestStatus']
+                resp.opensea.safelist_request_status
             )
         )
 
@@ -100,8 +101,8 @@ class TestAlchemyNFT(unittest.TestCase):
         nfts = response['nfts']
         self.assertTrue(nfts)
         self.assertEqual(len(nfts), 10)
-        self.assertIsNotNone(nfts[0]['contract'].get('symbol'))
-        self.assertIsNotNone(nfts[0]['contract'].get('totalSupply'))
+        self.assertIsNotNone(nfts[0].contract.symbol)
+        self.assertIsNotNone(nfts[0].contract.total_supply)
 
     def test_get_owners_for_nft(self):
         contract_address = '0x01234567bac6ff94d7e4f0ee23119cf848f93245'
@@ -114,10 +115,10 @@ class TestAlchemyNFT(unittest.TestCase):
         response = self.alchemy.nft.get_nfts_for_owner(
             owner, exclude_filters=[NftFilters.SPAM], omit_metadata=True
         )
-        owned_nfts = response['ownedNfts']
+        owned_nfts = response['owned_nfts']
         self.assertTrue(owned_nfts)
         owners = self.alchemy.nft.get_owners_for_nft(
-            owned_nfts[0]['contract']['address'], owned_nfts[0]['tokenId']
+            owned_nfts[0].contract.address, owned_nfts[0].token_id
         )
         self.assertTrue(owners)
         self.assertIn(owner.lower(), owners)
@@ -129,33 +130,33 @@ class TestAlchemyNFT(unittest.TestCase):
         )
         owners = response['owners']
         self.assertTrue(owners)
-        self.assertTrue(owners[0].get('tokenBalances'))
-        self.assertIsInstance(owners[0]['tokenBalances'][0]['balance'], int)
+        self.assertTrue(owners[0].token_balances)
+        self.assertIsInstance(owners[0].token_balances[0].balance, int)
 
     def test_get_contracts_for_owner(self):
         owner = '0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D'
         response = self.alchemy.nft.get_contracts_for_owner(owner)
         contracts = response.get('contracts')
         self.assertGreater(len(contracts), 0)
-        self.assertIsInstance(contracts[0]['totalSupply'], str)
-        self.assertIsInstance(contracts[0]['symbol'], str)
-        self.assertEqual(contracts[0]['tokenType'], NftTokenType.ERC721)
-        self.assertIsInstance(contracts[0]['name'], str)
-        self.assertIsNotNone(contracts[0]['openSea'])
-        self.assertIsNotNone(contracts[0]['openSea']['safelistRequestStatus'])
+        self.assertIsInstance(contracts[0].total_supply, str)
+        self.assertIsInstance(contracts[0].symbol, str)
+        self.assertEqual(contracts[0].token_type, NftTokenType.ERC721)
+        self.assertIsInstance(contracts[0].name, str)
+        self.assertIsNotNone(contracts[0].opensea)
+        self.assertIsNotNone(contracts[0].opensea.safelist_request_status)
         self.assertIsNotNone(
             OpenSeaSafelistRequestStatus.return_value(
-                contracts[0]['openSea']['safelistRequestStatus']
+                contracts[0].opensea.safelist_request_status
             )
         )
-        self.assertIsInstance(contracts[0]['contractDeployer'], str)
-        self.assertIsInstance(contracts[0]['deployedBlockNumber'], int)
+        self.assertIsInstance(contracts[0].contract_deployer, str)
+        self.assertIsInstance(contracts[0].deployed_block_number, int)
 
     def test_get_contracts_for_owner_with_page_key(self):
         owner = 'vitalik.eth'
         response = self.alchemy.nft.get_contracts_for_owner(owner)
         contracts_1 = response.get('contracts')
-        page_key = response.get('pageKey')
+        page_key = response.get('page_key')
 
         self.assertIsNotNone(page_key)
         self.assertIsInstance(page_key, str)
@@ -170,7 +171,7 @@ class TestAlchemyNFT(unittest.TestCase):
         )
         contracts = response['contracts']
         for contract in contracts:
-            self.assertTrue(contract['isSpam'])
+            self.assertTrue(contract.is_spam)
 
         owner = '0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D'
         response = self.alchemy.nft.get_contracts_for_owner(
@@ -178,7 +179,7 @@ class TestAlchemyNFT(unittest.TestCase):
         )
         contracts = response['contracts']
         for contract in contracts:
-            self.assertFalse(contract['isSpam'])
+            self.assertFalse(contract.is_spam)
 
     def test_get_spam_contracts(self):
         resp = self.alchemy.nft.get_spam_contracts()
@@ -207,6 +208,6 @@ class TestAlchemyNFT(unittest.TestCase):
         token_id = '403'
         resp = self.alchemy.nft.compute_rarity(contract_address, token_id)
         self.assertTrue(resp)
-        self.assertIsNotNone(resp[0].get('prevalence'))
-        self.assertIsNotNone(resp[0].get('traitType'))
-        self.assertIsNotNone(resp[0].get('value'))
+        self.assertIsNotNone(resp[0].prevalence)
+        self.assertIsNotNone(resp[0].trait_type)
+        self.assertIsNotNone(resp[0].value)
