@@ -71,18 +71,6 @@ class NftOrdering(str, enum.Enum):
         return str.__str__(self)
 
 
-# syntax: "from" keyword not allowed in class construction
-TransferredNft = TypedDict(
-    'TransferredNft',
-    {
-        'from': HexAddress,
-        'to': Optional[HexAddress],
-        'transactionHash': str,
-        'blockNumber': str,
-    },
-)
-
-
 class RefreshState(str, enum.Enum):
     DOES_NOT_EXIST = 'does_not_exist'
     ALREADY_QUEUED = 'already_queued'
@@ -102,18 +90,9 @@ class RefreshState(str, enum.Enum):
             raise AlchemyError(f'Unknown reingestion state: {value}')
 
 
-class FloorPriceMarketplace(TypedDict):
-    floorPrice: float
-    priceCurrency: str
-    collectionUrl: str
-    retrievedAt: str
-
-
-class FloorPriceError(TypedDict):
-    error: str
-
-
 class NftMetadataBatchToken(TypedDict):
-    contractAddress: str
-    tokenId: TokenID
-    tokenType: NotRequired[Literal[NftTokenType.ERC1155] | Literal[NftTokenType.ERC721]]
+    contract_address: str
+    token_id: TokenID
+    token_type: NotRequired[
+        Literal[NftTokenType.ERC1155] | Literal[NftTokenType.ERC721]
+    ]

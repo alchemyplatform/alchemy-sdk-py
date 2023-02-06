@@ -5,7 +5,7 @@ from typing import Optional, List, Any
 
 from dataclass_wizard import JSONSerializable, json_field
 
-from .types import NftSpamClassification, NftTokenType, OpenSeaSafelistRequestStatus
+from alchemy.types import HexAddress
 from .raw import (
     RawNftContract,
     RawOwnedBaseNft,
@@ -14,7 +14,12 @@ from .raw import (
     RawContractBaseNft,
     RawContractForOwner,
 )
-from alchemy.types import HexAddress
+from .types import (
+    NftSpamClassification,
+    NftTokenType,
+    OpenSeaSafelistRequestStatus,
+    RefreshState,
+)
 
 
 class GlobalJSONMeta(JSONSerializable.Meta):
@@ -31,7 +36,7 @@ class Base(JSONSerializable):
             else:
                 token_type = raw['contractMetadata']['tokenType']
             return NftTokenType.return_value(token_type)
-        except KeyError:
+        except (KeyError, TypeError):
             return NftTokenType.UNKNOWN
 
     @staticmethod
@@ -39,7 +44,7 @@ class Base(JSONSerializable):
         try:
             token_type = raw['id']['tokenMetadata']['tokenType']
             return NftTokenType.return_value(token_type)
-        except KeyError:
+        except (KeyError, TypeError):
             return NftTokenType.UNKNOWN
 
     @staticmethod
@@ -47,7 +52,7 @@ class Base(JSONSerializable):
         try:
             if raw['tokenUri']['raw'] and raw['tokenUri']['gateway']:
                 return raw['tokenUri']
-        except KeyError:
+        except (KeyError, TypeError):
             return None
 
     @classmethod
@@ -114,10 +119,10 @@ class NftContract(BaseNftContract):
 
 @dataclass
 class ContractForOwnerClass(NftContract):
-    total_balance: float = field(default=float)
-    num_distinct_tokens_owned: int = field(default=int)
-    is_spam: bool = field(default=bool)
-    token_id: str = field(default=str)
+    total_balance: float = field(default=None)
+    num_distinct_tokens_owned: int = field(default=None)
+    is_spam: bool = field(default=None)
+    token_id: str = field(default=None)
     media: List[Media] = field(default_factory=list)  # TODO: js api no List
 
     @classmethod
@@ -194,9 +199,10 @@ class Nft(Base):
         return {**fields, **raw}
 
     @classmethod
-    def from_raw(cls, raw) -> Nft:
-        fields = cls.parse_raw(raw)
-        return cls.from_dict(fields)
+    def from_dict(cls, data, is_raw=False):
+        if is_raw:
+            data = cls.parse_raw(data)
+        return super().from_dict(data)
 
 
 @dataclass
@@ -261,3 +267,37 @@ class NftAttributeRarity(JSONSerializable):
     value: str
     trait_type: str
     prevalence: int
+
+
+@dataclass
+class TransferredNft(Nft):
+    frm: HexAddress = json_field('from', all=True, default=None)
+    to: Optional[HexAddress] = None
+    transaction_hash: str = field(default='')
+    block_number: str = field(default='')
+
+    @classmethod
+    def from_dict(cls, data, is_raw=False):
+        return super().from_dict(data, is_raw=is_raw)
+
+
+@dataclass
+class RefreshContract(JSONSerializable):
+    contract_address: HexAddress
+    refresh_state: RefreshState = json_field('reingestionState', default=None)
+    progress: Optional[str] = None
+
+
+@dataclass
+class FloorPriceMarketplace(JSONSerializable):
+    floor_price: Optional[float] = None
+    price_currency: Optional[str] = None
+    collection_url: Optional[str] = None
+    retrieved_at: Optional[str] = None
+    error: Optional[str] = None
+
+
+@dataclass
+class FloorPrice(JSONSerializable):
+    opensea: FloorPriceMarketplace = json_field('openSea', default=None)
+    looks_rare: FloorPriceMarketplace = field(default_factory=FloorPriceMarketplace)

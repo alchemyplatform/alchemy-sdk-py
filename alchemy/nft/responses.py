@@ -9,9 +9,8 @@ from .models import (
     BaseNft,
     NftContractOwner,
     ContractForOwnerClass,
+    TransferredNft,
 )
-from .types import TransferredNft, FloorPriceMarketplace, FloorPriceError, RefreshState
-from alchemy.types import HexAddress
 
 
 class OwnedNftsResponse(TypedDict):
@@ -53,15 +52,4 @@ class ContractsForOwnerResponse(TypedDict):
 
 class TransfersNftResponse(TypedDict):
     nfts: List[TransferredNft]
-    pageKey: Optional[str]
-
-
-class FloorPriceResponse(TypedDict):
-    openSea: FloorPriceMarketplace | FloorPriceError
-    looksRare: FloorPriceMarketplace | FloorPriceError
-
-
-class RefreshContractResponse(TypedDict):
-    contractAddress: HexAddress
-    refreshState: RefreshState
-    progress: Optional[str]
+    page_key: Optional[str]

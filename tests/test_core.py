@@ -16,25 +16,28 @@ class TestAlchemyCore(unittest.TestCase):
         balance = self.alchemy.core.get_token_balances(
             address, data=TokenBalanceType.ERC20
         )
-        self.assertIsNotNone(balance.get('pageKey'))
+        self.assertIsNotNone(balance.get('page_key'))
 
         balance2 = self.alchemy.core.get_token_balances(
-            address, data=TokenBalanceType.ERC20, page_key=balance.get('pageKey')
+            address, data=TokenBalanceType.ERC20, page_key=balance.get('page_key')
         )
-        self.assertTrue(balance2['tokenBalances'])
-        self.assertNotEqual(balance['tokenBalances'][0], balance2['tokenBalances'][0])
+        self.assertTrue(balance2['token_balances'])
+        self.assertNotEqual(balance['token_balances'][0], balance2['token_balances'][0])
 
         response = self.alchemy.core.get_token_balances(
             address, data=[self.usdt_contract]
         )
-        self.assertEqual(len(response['tokenBalances']), 1)
+        self.assertEqual(len(response['token_balances']), 1)
+        self.assertEqual(
+            response['token_balances'][0].contract_address, self.usdt_contract
+        )
 
     def test_get_token_metadata(self):
         resp = self.alchemy.core.get_token_metadata(self.usdt_contract)
-        self.assertTrue(resp.get('name'))
-        self.assertTrue(resp.get('symbol'))
-        self.assertTrue(resp.get('decimals'))
-        self.assertTrue(resp.get('logo'))
+        self.assertTrue(resp.name)
+        self.assertTrue(resp.symbol)
+        self.assertTrue(resp.decimals)
+        self.assertTrue(resp.logo)
 
     def test_get_asset_transfers(self):
         bayc_contract = '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d'
@@ -49,11 +52,11 @@ class TestAlchemyCore(unittest.TestCase):
         all_transfers = response['transfers']
         self.assertTrue(all_transfers)
         first_transfer = all_transfers[0]
-        self.assertEqual(first_transfer['category'], 'erc721')
-        self.assertEqual(first_transfer['rawContract']['address'], bayc_contract)
-        self.assertEqual(first_transfer['blockNum'], '0xf71403')
+        self.assertEqual(first_transfer.category, 'erc721')
+        self.assertEqual(first_transfer.raw_contract.address, bayc_contract)
+        self.assertEqual(first_transfer.block_num, '0xf71403')
         self.assertEqual(
-            first_transfer['metadata']['blockTimestamp'], '2022-12-15T20:35:11.000Z'
+            first_transfer.metadata.block_timestamp, '2022-12-15T20:35:11.000Z'
         )
 
     def test_get_transaction_receipts(self):

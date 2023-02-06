@@ -6,21 +6,23 @@ from web3 import Web3
 from web3.eth import Eth
 from web3.types import ENS
 
-from alchemy.core.types import (
-    HexAddress,
-    TokenMetadataResponse,
-    AssetTransfersResponse,
-    TokenBalancesResponse,
+from alchemy.core.models import (
+    TokenMetadata,
+    TokenBalance,
+    AssetTransfersWithMetadataResult,
+    AssetTransfersResult,
+)
+from alchemy.core.responses import (
     TokenBalancesResponseErc20,
+    TokenBalancesResponse,
+    AssetTransfersResponse,
     AssetTransfersWithMetadataResponse,
-    TokenBalanceType,
-    SortingOrder,
-    BlockIdentifier,
     TxReceiptsResponse,
 )
+from alchemy.core.types import TokenBalanceType, SortingOrder, BlockIdentifier
 from alchemy.exceptions import AlchemyError
 from alchemy.provider import AlchemyProvider
-from alchemy.types import AssetTransfersCategory
+from alchemy.types import AssetTransfersCategory, HexAddress
 from alchemy.utils import is_valid_address
 
 
@@ -92,9 +94,7 @@ class AlchemyCore(Eth):
 
     @overload
     def get_token_balances(
-        self,
-        address: HexAddress | ENS,
-        data: Literal[TokenBalanceType.DEFAULT_TOKENS],
+        self, address: HexAddress | ENS, data: Literal[TokenBalanceType.DEFAULT_TOKENS]
     ) -> TokenBalancesResponse:
         """
         Returns the token balances for a specific owner, fetching from the top 100
@@ -128,7 +128,15 @@ class AlchemyCore(Eth):
                 params=[address, data],
                 method_name='getTokenBalances',
             )
-            return response['result']
+            result: TokenBalancesResponse = {'address': response['result']['address']}
+            token_balances = []
+            if response['result'].get('tokenBalances'):
+                token_balances = [
+                    TokenBalance.from_dict(balance)
+                    for balance in response['result']['tokenBalances']
+                ]
+            result['token_balances'] = token_balances
+            return result
 
         else:
             params = [address]
@@ -142,9 +150,20 @@ class AlchemyCore(Eth):
                 params=params,
                 method_name='getTokenBalances',
             )
-            return response['result']
+            result: TokenBalancesResponseErc20 | TokenBalancesResponse = {
+                'address': response['result']['address']
+            }
+            token_balances = []
+            if response['result'].get('tokenBalances'):
+                token_balances = [
+                    TokenBalance.from_dict(balance)
+                    for balance in response['result']['tokenBalances']
+                ]
+            result['token_balances'] = token_balances
+            result['page_key'] = response['result'].get('pageKey')  # type: ignore
+            return result
 
-    def get_token_metadata(self, contract_address: HexAddress) -> TokenMetadataResponse:
+    def get_token_metadata(self, contract_address: HexAddress) -> TokenMetadata:
         """
         Returns metadata for a given token contract address.
 
@@ -156,7 +175,7 @@ class AlchemyCore(Eth):
             params=[contract_address],
             method_name='getTokenMetadata',
         )
-        return response['result']
+        return TokenMetadata.from_dict(response['result'])
 
     @overload
     def get_asset_transfers(
@@ -293,7 +312,22 @@ class AlchemyCore(Eth):
             params=[params],
             method_name=kwargs.get('src_method', 'getAssetTransfers'),
         )
-        return response['result']
+        if with_metadata:
+            result: AssetTransfersWithMetadataResponse = {
+                'transfers': [
+                    AssetTransfersWithMetadataResult.from_dict(transfer)
+                    for transfer in response['result']['transfers']
+                ]
+            }
+        else:
+            result: AssetTransfersResponse = {
+                'transfers': [
+                    AssetTransfersResult.from_dict(transfer)
+                    for transfer in response['result']['transfers']
+                ]
+            }
+        result['page_key'] = response['result'].get('pageKey')
+        return result
 
     def get_transaction_receipts(
         self,

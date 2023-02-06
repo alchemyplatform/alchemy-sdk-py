@@ -7,8 +7,7 @@ from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus, NftFil
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        # self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
-        self.alchemy = Alchemy(api_key='lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
+        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
 
     def test_get_nft_metadata(self):
         contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'
@@ -23,13 +22,13 @@ class TestAlchemyNFT(unittest.TestCase):
     def test_get_nft_metadata_batch(self):
         tokens = [
             {
-                'contractAddress': '0x0510745d2ca36729bed35c818527c4485912d99e',
-                'tokenId': 403,
-                'tokenType': NftTokenType.ERC721,
+                'contract_address': '0x0510745d2ca36729bed35c818527c4485912d99e',
+                'token_id': 403,
+                'token_type': NftTokenType.ERC721,
             },
             {
-                'contractAddress': '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d',
-                'tokenId': 5304,
+                'contract_address': '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d',
+                'token_id': 5304,
             },
         ]
         resp = self.alchemy.nft.get_nft_metadata_batch(tokens=tokens)
@@ -39,11 +38,13 @@ class TestAlchemyNFT(unittest.TestCase):
     def test_get_minted_nfts(self):
         owner = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
         resp = self.alchemy.nft.get_minted_nfts(owner=owner)
-        self.assertIsNotNone(resp.get('pageKey'))
+        self.assertIsNotNone(resp.get('page_key'))
         self.assertIsNotNone(resp.get('nfts'))
         self.assertGreater(len(resp['nfts']), 0)
 
-        resp_2 = self.alchemy.nft.get_minted_nfts(owner=owner, page_key=resp['pageKey'])
+        resp_2 = self.alchemy.nft.get_minted_nfts(
+            owner=owner, page_key=resp['page_key']
+        )
         self.assertGreater(len(resp_2['nfts']), 0)
         self.assertNotEqual(resp['nfts'], resp_2['nfts'])
 
@@ -194,14 +195,14 @@ class TestAlchemyNFT(unittest.TestCase):
     def test_refresh_contract(self):
         contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'
         resp = self.alchemy.nft.refresh_contract(contract_address)
-        self.assertIsNotNone(resp.get('contractAddress'))
+        self.assertIsNotNone(resp.contract_address)
 
     def test_get_floor_price(self):
         contract_address = '0x01234567bac6ff94d7e4f0ee23119cf848f93245'
         resp = self.alchemy.nft.get_floor_price(contract_address)
         self.assertTrue(resp)
-        self.assertIsNotNone(resp.get('openSea'))
-        self.assertIsNotNone(resp.get('looksRare'))
+        self.assertIsNotNone(resp)
+        self.assertIsNotNone(resp.looks_rare)
 
     def test_compute_rarity(self):
         contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'

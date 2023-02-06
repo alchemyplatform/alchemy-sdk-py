@@ -18,15 +18,20 @@ from alchemy.nft.models import (
     NftContractOwner,
     NftAttributeRarity,
     ContractForOwnerClass,
+    RefreshContract,
+    FloorPrice,
+    TransferredNft,
 )
 from alchemy.nft.types import (
     TokenID,
     NftTokenType,
-    RefreshState,
     NftFilters,
     NftOrdering,
     NftMetadataBatchToken,
 )
+from alchemy.provider import AlchemyProvider
+from alchemy.types import HexAddress, AlchemyApiType, ETH_NULL_ADDRESS
+from alchemy.utils import is_valid_address, dict_keys_to_camel
 from .raw import (
     RawNftContract,
     RawBaseNftsForContractResponse,
@@ -36,10 +41,6 @@ from .raw import (
     RawContractsForOwnerResponse,
     RawNftsResponse,
 )
-from alchemy.nft.utils import token_type_to_category, get_tokens_from_transfers
-from alchemy.provider import AlchemyProvider
-from alchemy.types import HexAddress, AlchemyApiType, ETH_NULL_ADDRESS
-from alchemy.utils import is_valid_address
 from .responses import (
     OwnedNftsResponse,
     OwnedBaseNftsResponse,
@@ -49,9 +50,8 @@ from .responses import (
     OwnersForContractWithTokenBalancesResponse,
     ContractsForOwnerResponse,
     TransfersNftResponse,
-    RefreshContractResponse,
-    FloorPriceResponse,
 )
+from .utils import token_type_to_category, get_tokens_from_transfers
 
 
 class AlchemyNFT:
@@ -465,9 +465,11 @@ class AlchemyNFT:
         nfts: List[Nft] = self._get_nft_metadata_batch(tokens)
         transferred_nfts = []
         for nft, transfer in zip(nfts, metadata_transfers):
-            transferred_nfts.append({**nft.to_dict(), **transfer['metadata']})
+            transferred_nfts.append(
+                TransferredNft.from_dict({**nft.to_dict(), **transfer['metadata']})
+            )
 
-        return {'nfts': transferred_nfts, 'pageKey': response['pageKey']}
+        return {'nfts': transferred_nfts, 'page_key': response['pageKey']}
 
     def get_spam_contracts(self) -> List[str]:
         """
@@ -498,7 +500,7 @@ class AlchemyNFT:
             config=self.provider.config,
         )
 
-    def refresh_contract(self, contract_address: HexAddress) -> RefreshContractResponse:
+    def refresh_contract(self, contract_address: HexAddress) -> RefreshContract:
         """
         Triggers a metadata refresh all NFTs in the provided contract address. This
         method is useful after an NFT collection is revealed.
@@ -514,25 +516,22 @@ class AlchemyNFT:
             params={'contractAddress': contract_address},
             config=self.provider.config,
         )
-        return {
-            'contractAddress': response['contractAddress'],
-            'refreshState': RefreshState.return_value(response['reingestionState']),
-            'progress': response['progress'],
-        }
+        return RefreshContract.from_dict(response)
 
-    def get_floor_price(self, contract_address: HexAddress) -> FloorPriceResponse:
+    def get_floor_price(self, contract_address: HexAddress) -> FloorPrice:
         """
         Returns the floor prices of a NFT contract by marketplace.
 
         :param contract_address: The contract address for the NFT collection.
         :return: FloorPriceResponse
         """
-        return api_request(
+        response = api_request(
             url=f'{self.url}/getFloorPrice',
             method_name='getFloorPrice',
             params={'contractAddress': contract_address},
             config=self.provider.config,
         )
+        return FloorPrice.from_dict(response)
 
     def compute_rarity(
         self, contract_address: HexAddress, token_id: TokenID
@@ -578,7 +577,7 @@ class AlchemyNFT:
             params=params,
             config=self.provider.config,
         )
-        return Nft.from_raw(response)
+        return Nft.from_dict(response, is_raw=True)
 
     def _get_nft_metadata_batch(
         self,
@@ -587,7 +586,10 @@ class AlchemyNFT:
         refresh_cache: bool = False,
         src_method: str = 'getNftMetadataBatch',
     ) -> List[Nft]:
-        data = {'tokens': tokens, 'refreshCache': refresh_cache}
+        tokens_new = []
+        for token in tokens:
+            tokens_new.append(dict_keys_to_camel(token))
+        data = {'tokens': tokens_new, 'refreshCache': refresh_cache}
         if token_uri_timeout:
             data['tokenUriTimeoutInMs'] = token_uri_timeout
 
@@ -598,7 +600,7 @@ class AlchemyNFT:
             data=data,
             rest_method='POST',
         )
-        return [Nft.from_raw(raw_nft) for raw_nft in response]
+        return [Nft.from_dict(raw_nft, is_raw=True) for raw_nft in response]
 
     def _get_nfts_for_owner(
         self,
@@ -678,7 +680,7 @@ class AlchemyNFT:
             }
         else:
             result: NftContractNftsResponse = {
-                'nfts': [Nft.from_raw(raw) for raw in response['nfts']]
+                'nfts': [Nft.from_dict(raw, is_raw=True) for raw in response['nfts']]
             }
         result['page_key'] = response.get('nextToken')
         return result
