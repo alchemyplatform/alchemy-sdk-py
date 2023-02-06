@@ -32,8 +32,8 @@ def api_request(
 ) -> Any:
     headers = {
         **options.get('headers', {}),
-        'Alchemy-Ethers-Sdk-Method': method_name,
-        'Alchemy-Ethers-Sdk-Version': __version__,
+        'Alchemy-Python-Sdk-Method': method_name,
+        'Alchemy-Python-Sdk-Version': __version__,
     }
 
     @backoff.on_exception(

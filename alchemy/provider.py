@@ -40,8 +40,8 @@ class AlchemyProvider(JSONBaseProvider):
         request_data = self.encode_rpc_request(method, params)  # type: ignore
         headers = {
             **headers,
-            'Alchemy-Ethers-Sdk-Method': method_name,
-            'Alchemy-Ethers-Sdk-Version': __version__,
+            'Alchemy-Python-Sdk-Method': method_name,
+            'Alchemy-Python-Sdk-Version': __version__,
         }
         try:
             raw_response = post_request(self.url, request_data, headers, **options)
