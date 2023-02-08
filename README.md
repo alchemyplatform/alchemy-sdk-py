@@ -1,15 +1,21 @@
 # Alchemy SDK for Python
 An Alchemy SDK to use the [Alchemy API](https://www.alchemy.com/).
 
-It supports the exact same syntax and functionality of the Web3 `eth`, 
-making it a 1:1 mapping for anyone using the Web3 `eth`. However, it adds a 
-significant amount of improved functionality on top of Web3, such as easy 
-access to Alchemy’s Enhanced and NFT APIs, and quality-of-life improvements 
-such as automated retries. 
+>❗❗ **THIS LIBRARY IS IN EARLY ALPHA** ❗❗
+>
+> This library is in active development and does not follow semantic versioning. Breaking changes may be introduced at any time. Please use with caution.
 
-The SDK leverages Alchemy's hardened node infrastructure, 
-guaranteeing best-in-class node reliability, scalability, and data correctness, 
+The SDK supports the exact same syntax and functionality of the Web3 `eth`,
+making it a 1:1 mapping for anyone using the Web3 `eth` library. However, it adds a
+significant amount of improved functionality on top of Web3, such as easy
+access to Alchemy’s Enhanced and NFT APIs, and quality-of-life improvements
+such as automated retries.
+
+The SDK leverages Alchemy's hardened node infrastructure,
+guaranteeing best-in-class node reliability, scalability, and data correctness,
 and is undergoing active development by Alchemy's engineers.
+
+
 
 > 🙋‍♀️ **FEATURE REQUESTS:**
 >
@@ -25,7 +31,7 @@ The SDK currently supports the following chains:
 
 
 ## Getting started
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install alchemy_sdk.
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install alchemy-sdk.
 
 ```bash
 pip3 install alchemy-sdk
@@ -120,8 +126,8 @@ under the `alchemy.nft` namespace:
 
 ### Pagination
 
-The Alchemy NFT endpoints return 100 results per page. To get the next page, you can pass in 
-the `pageKey` returned by the previous call.
+The Alchemy NFT endpoints return 100 results per page. To get the next page, you can pass in
+the `page_key` returned by the previous call.
 
 ### SDK vs API Differences
 
