@@ -2,7 +2,12 @@ import os
 import unittest
 
 from alchemy import Alchemy
-from alchemy.nft.types import NftTokenType, OpenSeaSafelistRequestStatus, NftFilters
+from alchemy.nft.types import (
+    NftTokenType,
+    OpenSeaSafelistRequestStatus,
+    NftFilters,
+    NftSaleMarketplace,
+)
 
 
 class TestAlchemyNFT(unittest.TestCase):
@@ -39,14 +44,50 @@ class TestAlchemyNFT(unittest.TestCase):
         owner = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
         resp = self.alchemy.nft.get_minted_nfts(owner=owner)
         self.assertIsNotNone(resp.get('page_key'))
-        self.assertIsNotNone(resp.get('nfts'))
-        self.assertGreater(len(resp['nfts']), 0)
+        self.assertTrue(resp['nfts'])
 
         resp_2 = self.alchemy.nft.get_minted_nfts(
             owner=owner, page_key=resp['page_key']
         )
-        self.assertGreater(len(resp_2['nfts']), 0)
+        self.assertTrue(resp_2['nfts'])
         self.assertNotEqual(resp['nfts'], resp_2['nfts'])
+
+    def test_get_minted_nfts_token_types(self):
+        owner = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+        resp = self.alchemy.nft.get_minted_nfts(
+            owner=owner, token_type=NftTokenType.ERC1155
+        )
+        nfts1155 = []
+        for nft in resp['nfts']:
+            if nft.token_type == NftTokenType.ERC1155:
+                nfts1155.append(nft)
+        self.assertEqual(len(nfts1155), len(resp['nfts']))
+
+        resp = self.alchemy.nft.get_minted_nfts(
+            owner=owner, token_type=NftTokenType.ERC721
+        )
+        nfts721 = []
+        for nft in resp['nfts']:
+            # Some 721 transfers are ingested as NftTokenType.UNKNOWN.
+            if nft.token_type != NftTokenType.ERC1155:
+                nfts721.append(nft)
+
+        self.assertEqual(len(nfts721), len(resp['nfts']))
+
+    def test_get_minted_nfts_with_contract_addresses(self):
+        owner = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+        contract_addresses = [
+            '0xa1eb40c284c5b44419425c4202fa8dabff31006b',
+            '0x8442864d6ab62a9193be2f16580c08e0d7bcda2f',
+        ]
+        resp = self.alchemy.nft.get_minted_nfts(
+            owner=owner, contract_addresses=contract_addresses
+        )
+        res = []
+        for nft in resp['nfts']:
+            if nft.contract.address in contract_addresses:
+                res.append(nft)
+        self.assertEqual(len(res), len(resp['nfts']))
 
     def test_get_nfts_for_owner(self):
         owner = '0xshah.eth'
@@ -181,6 +222,64 @@ class TestAlchemyNFT(unittest.TestCase):
         contracts = response['contracts']
         for contract in contracts:
             self.assertFalse(contract.is_spam)
+
+    def verify_nft_sales_data(self, nft_sales):
+        self.assertTrue(nft_sales)
+        nft_sale = nft_sales[0]
+        self.assertIsNotNone(nft_sale.bundle_index)
+        self.assertIsInstance(nft_sale.bundle_index, int)
+        self.assertIsNotNone(nft_sale.buyer_address)
+        self.assertIsInstance(nft_sale.buyer_address, str)
+        self.assertIsNotNone(nft_sale.contract_address)
+        self.assertIsInstance(nft_sale.contract_address, str)
+        self.assertIsNotNone(nft_sale.log_index)
+        self.assertIsInstance(nft_sale.log_index, int)
+        self.assertIsNotNone(nft_sale.marketplace)
+        self.assertIsNotNone(nft_sale.quantity)
+        self.assertIsInstance(nft_sale.quantity, str)
+        self.assertIsNotNone(nft_sale.seller_address)
+        self.assertIsInstance(nft_sale.seller_address, str)
+        self.assertIsNotNone(nft_sale.taker)
+        self.assertIsInstance(nft_sale.taker, str)
+        self.assertIsNotNone(nft_sale.token_id)
+        self.assertIsInstance(nft_sale.token_id, str)
+        self.assertIsNotNone(nft_sale.transaction_hash)
+        self.assertIsInstance(nft_sale.transaction_hash, str)
+
+    def test_get_nft_sales(self):
+        response = self.alchemy.nft.get_nft_sales()
+        self.assertIsNotNone(response['page_key'])
+        self.verify_nft_sales_data(response['nft_sales'])
+
+    def test_get_nft_sales_with_token(self):
+        response = self.alchemy.nft.get_nft_sales(
+            contract_address='0xe785E82358879F061BC3dcAC6f0444462D4b5330', token_id=44
+        )
+        self.verify_nft_sales_data(response['nft_sales'])
+        nft_sale = response['nft_sales'][0]
+        self.assertIsNotNone(nft_sale.royalty_fee)
+        self.assertIsNotNone(nft_sale.protocol_fee)
+        self.assertIsNotNone(nft_sale.seller_fee)
+
+    def test_get_nft_sales_with_page_key(self):
+        response_1 = self.alchemy.nft.get_nft_sales()
+        self.assertIsNotNone(response_1['page_key'])
+        response_2 = self.alchemy.nft.get_nft_sales(page_key=response_1['page_key'])
+        self.assertNotEqual(response_1['nft_sales'][0], response_2['nft_sales'][0])
+
+    def test_get_nft_sales_with_contract_address(self):
+        contract_address = '0xaf1cfc6b4104c797149fb7a294f7d46f7ec27b80'
+        response = self.alchemy.nft.get_nft_sales(contract_address=contract_address)
+        self.assertTrue(response['nft_sales'])
+        self.assertEqual(response['nft_sales'][0].contract_address, contract_address)
+
+    def test_get_nft_sales_with_marketplace(self):
+        for market in NftSaleMarketplace:
+            if market == NftSaleMarketplace.UNKNOWN:
+                continue
+            response = self.alchemy.nft.get_nft_sales(marketplace=market, limit=10)
+            for nft_sale in response['nft_sales']:
+                self.assertEqual(nft_sale.marketplace, market)
 
     def test_get_spam_contracts(self):
         resp = self.alchemy.nft.get_spam_contracts()

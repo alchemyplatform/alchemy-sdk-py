@@ -19,10 +19,10 @@ from alchemy.core.responses import (
     AssetTransfersWithMetadataResponse,
     TxReceiptsResponse,
 )
-from alchemy.core.types import TokenBalanceType, SortingOrder, BlockIdentifier
+from alchemy.core.types import TokenBalanceType
 from alchemy.exceptions import AlchemyError
 from alchemy.provider import AlchemyProvider
-from alchemy.types import AssetTransfersCategory, HexAddress
+from alchemy.types import AssetTransfersCategory, HexAddress, BlockIdentifier, SortingOrder
 from alchemy.utils import is_valid_address
 
 

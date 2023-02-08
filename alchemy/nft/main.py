@@ -17,10 +17,11 @@ from alchemy.nft.models import (
     NftContract,
     NftContractOwner,
     NftAttributeRarity,
-    ContractForOwnerClass,
+    ContractForOwner,
     RefreshContract,
     FloorPrice,
     TransferredNft,
+    NftSale,
 )
 from alchemy.nft.types import (
     TokenID,
@@ -28,9 +29,17 @@ from alchemy.nft.types import (
     NftFilters,
     NftOrdering,
     NftMetadataBatchToken,
+    NftSaleMarketplace,
+    NftSaleTakerType,
 )
 from alchemy.provider import AlchemyProvider
-from alchemy.types import HexAddress, AlchemyApiType, ETH_NULL_ADDRESS
+from alchemy.types import (
+    HexAddress,
+    AlchemyApiType,
+    ETH_NULL_ADDRESS,
+    BlockIdentifier,
+    SortingOrder,
+)
 from alchemy.utils import is_valid_address, dict_keys_to_camel
 from .raw import (
     RawNftContract,
@@ -40,6 +49,7 @@ from .raw import (
     RawNft,
     RawContractsForOwnerResponse,
     RawNftsResponse,
+    RawGetNftSalesResponse,
 )
 from .responses import (
     OwnedNftsResponse,
@@ -50,6 +60,7 @@ from .responses import (
     OwnersForContractWithTokenBalancesResponse,
     ContractsForOwnerResponse,
     TransfersNftResponse,
+    NftSalesResponse,
 )
 from .utils import token_type_to_category, get_tokens_from_transfers
 
@@ -424,7 +435,7 @@ class AlchemyNFT:
         )
         result: ContractsForOwnerResponse = {
             'contracts': [
-                ContractForOwnerClass.from_raw(raw) for raw in response['contracts']
+                ContractForOwner.from_raw(raw) for raw in response['contracts']
             ],
             'total_count': response['totalCount'],
             'page_key': response.get('pageKey'),
@@ -469,7 +480,65 @@ class AlchemyNFT:
                 TransferredNft.from_dict({**nft.to_dict(), **transfer['metadata']})
             )
 
-        return {'nfts': transferred_nfts, 'page_key': response['pageKey']}
+        return {'nfts': transferred_nfts, 'page_key': response['page_key']}
+
+    def get_nft_sales(
+        self,
+        contract_address: Optional[HexAddress] = None,
+        token_id: Optional[TokenID] = None,
+        from_block: Optional[BlockIdentifier] = None,
+        to_block: Optional[BlockIdentifier] = None,
+        order: Optional[SortingOrder] = None,
+        marketplace: Optional[NftSaleMarketplace] = None,
+        buyer_address: Optional[HexAddress] = None,
+        seller_address: Optional[HexAddress] = None,
+        taker: Optional[NftSaleTakerType] = None,
+        limit: Optional[int] = None,
+        page_key: Optional[str] = None,
+    ) -> NftSalesResponse:
+        """
+        Returns NFT sales that have happened through on-chain marketplaces.
+
+        :param contract_address: The contract address of a NFT collection to filter sales by.
+        :param token_id: The token ID of an NFT within the specified contractAddress to filter sales by.
+        :param from_block: The block number to start fetching NFT sales data from.
+        :param to_block: The block number limit to fetch NFT sales data from.
+        :param order: Whether to return the results in ascending or descending order by block number.
+        :param marketplace: The NFT marketplace to filter sales by.
+        :param buyer_address: The address of the NFT buyer to filter sales by.
+        :param seller_address: The address of the NFT seller to filter sales by.
+        :param taker: Filter by whether the buyer or seller was the taker in the NFT trade.
+            Defaults to returning both buyer and seller taker trades.
+        :param limit: The maximum number of NFT sales to return.
+        :param page_key: Key for pagination to use to fetch results from the next page if available.
+        :return: NftSalesResponse
+        """
+        params = {
+            'contractAddress': contract_address,
+            'from_block': from_block,
+            'toBlock': to_block,
+            'order': order,
+            'marketplace': marketplace,
+            'buyerAddress': buyer_address,
+            'sellerAddress': seller_address,
+            'taker': taker,
+            'limit': limit,
+            'pageKey': page_key,
+            'tokenId': str(token_id) if token_id else None,
+        }
+        response: RawGetNftSalesResponse = api_request(
+            url=f'{self.url}/getNFTSales',
+            method_name='getNftSales',
+            params=params,
+            config=self.provider.config,
+        )
+        result: NftSalesResponse = {
+            'nft_sales': [
+                NftSale.from_dict(nft_sale) for nft_sale in response['nftSales']
+            ],
+            'page_key': response.get('pageKey'),
+        }
+        return result
 
     def get_spam_contracts(self) -> List[str]:
         """

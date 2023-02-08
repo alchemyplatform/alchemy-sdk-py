@@ -1,11 +1,15 @@
 import enum
-from typing import Union
+from typing import Union, Literal
 from eth_typing import HexStr
 from enum import Enum
 
-HexAddress = Union[HexStr, str]
+from web3.types import LatestBlockParam
 
 ETH_NULL_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+HexAddress = Union[HexStr, str]
+BlockIdentifier = Union[HexStr, int, LatestBlockParam]
+SortingOrder = Literal['asc', 'desc']
 
 
 class Network(str, Enum):

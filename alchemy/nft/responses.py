@@ -8,8 +8,9 @@ from .models import (
     Nft,
     BaseNft,
     NftContractOwner,
-    ContractForOwnerClass,
+    ContractForOwner,
     TransferredNft,
+    NftSale,
 )
 
 
@@ -45,11 +46,16 @@ class OwnersForContractWithTokenBalancesResponse(TypedDict):
 
 
 class ContractsForOwnerResponse(TypedDict):
-    contracts: List[ContractForOwnerClass]
+    contracts: List[ContractForOwner]
     page_key: Optional[str]
     total_count: int
 
 
 class TransfersNftResponse(TypedDict):
     nfts: List[TransferredNft]
+    page_key: Optional[str]
+
+
+class NftSalesResponse(TypedDict):
+    nft_sales: List[NftSale]
     page_key: Optional[str]

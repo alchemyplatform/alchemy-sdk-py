@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from typing import Optional, List
+
+from alchemy.core.models import AssetTransfersResult
 from alchemy.types import AssetTransfersCategory
-from alchemy.nft.types import NftTokenType, Optional, List
+from alchemy.nft.types import NftTokenType
 
 
 def token_type_to_category(
@@ -19,30 +22,30 @@ def token_type_to_category(
         ]
 
 
-def get_tokens_from_transfers(transfers):
+def get_tokens_from_transfers(transfers: List[AssetTransfersResult]):
     for transfer in transfers:
-        if not transfer['rawContract'].get('address'):
+        if not transfer.raw_contract.address:
             continue
 
         metadata = {
-            'from': transfer['from'],
-            'to': transfer.get('to'),
-            'transactionHash': transfer['hash'],
-            'blockNumber': transfer['blockNum'],
+            'from': transfer.frm,
+            'to': transfer.to,
+            'transactionHash': transfer.hash,
+            'blockNumber': transfer.block_num,
         }
-        if transfer['category'] == AssetTransfersCategory.ERC1155:
-            for meta in transfer['erc1155Metadata']:
+        if transfer.category == AssetTransfersCategory.ERC1155:
+            for meta in transfer.erc1155_metadata:
                 token = {
-                    'contractAddress': transfer['rawContract']['address'],
-                    'tokenId': meta['tokenId'],
+                    'contractAddress': transfer.raw_contract.address,
+                    'tokenId': meta.token_id,
                     'tokenType': NftTokenType.ERC1155,
                 }
                 yield {'metadata': metadata, 'token': token}
         else:
             token = {
-                'contractAddress': transfer['rawContract']['address'],
-                'tokenId': transfer['tokenId'],
+                'contractAddress': transfer.raw_contract.address,
+                'tokenId': transfer.token_id,
             }
-            if transfer['category'] == AssetTransfersCategory.ERC721:
+            if transfer.category == AssetTransfersCategory.ERC721:
                 token['tokenType'] = NftTokenType.ERC721
             yield {'metadata': metadata, 'token': token}

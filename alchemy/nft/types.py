@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import enum
-from typing import TypedDict, List, Union, Literal, Any, Optional
+from typing import TypedDict, Union, Literal
+from typing_extensions import NotRequired
 
 from alchemy.exceptions import AlchemyError
-from alchemy.types import HexAddress
-
-from typing_extensions import NotRequired, Required
-
 
 TokenID = Union[str, int]
 NftSpamClassification = Union[
@@ -19,7 +16,7 @@ NftSpamClassification = Union[
         'OwnedByMostHoneyPots',
     ],
     str,
-]  # check return values from Alchemy API
+]
 
 
 class OpenSeaSafelistRequestStatus(str, enum.Enum):
@@ -27,7 +24,6 @@ class OpenSeaSafelistRequestStatus(str, enum.Enum):
     APPROVED = 'approved'
     REQUESTED = 'requested'
     NOT_REQUESTED = 'not_requested'
-    # disabled_top_trending
 
     def __str__(self) -> str:
         return str.__str__(self)
@@ -96,3 +92,30 @@ class NftMetadataBatchToken(TypedDict):
     token_type: NotRequired[
         Literal[NftTokenType.ERC1155] | Literal[NftTokenType.ERC721]
     ]
+
+
+class NftSaleMarketplace(str, enum.Enum):
+    SEAPORT = 'seaport'
+    LOOKSRARE = 'looksrare'
+    X2Y2 = 'x2y2'
+    WYVERN = 'wyvern'
+    CRYPTOPUNKS = 'cryptopunks'
+    UNKNOWN = 'unknown'
+
+    def __str__(self) -> str:
+        return str.__str__(self)
+
+    @classmethod
+    def return_value(cls, value):
+        try:
+            return cls(value.lower())
+        except ValueError:
+            return cls.UNKNOWN
+
+
+class NftSaleTakerType(str, enum.Enum):
+    BUYER = 'buyer'
+    SELLER = 'seller'
+
+    def __str__(self) -> str:
+        return str.__str__(self)

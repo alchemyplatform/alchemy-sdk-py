@@ -145,3 +145,31 @@ class RawContractsForOwnerResponse(TypedDict):
     contracts: List[RawContractForOwner]
     pageKey: NotRequired[str]
     totalCount: int
+
+
+class RawNftSaleFeeData(TypedDict):
+    amount: str
+    symbol: str
+    decimals: int
+
+
+class RawNftSale(TypedDict):
+    marketplace: str
+    contractAddress: str
+    tokenId: str
+    quantity: str
+    buyerAddress: str
+    sellerAddress: str
+    taker: str
+    sellerFee: RawNftSaleFeeData
+    protocolFee: NotRequired[RawNftSaleFeeData]
+    royaltyFee: NotRequired[RawNftSaleFeeData]
+    blockNumber: int
+    logIndex: int
+    bundleIndex: int
+    transactionHash: str
+
+
+class RawGetNftSalesResponse(TypedDict):
+    nftSales: List[RawNftSale]
+    pageKey: NotRequired[str]
