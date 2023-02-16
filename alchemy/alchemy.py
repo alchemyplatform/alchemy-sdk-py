@@ -41,6 +41,7 @@ class Alchemy:
     ) -> bytes:
         """
         Takes a variety of inputs and returns its bytes equivalent. Text gets encoded as UTF-8.
+        
             >>> Alchemy.to_bytes(0)
             b'\x00'
             >>> Alchemy.to_bytes(0x000F)
@@ -62,6 +63,7 @@ class Alchemy:
     ) -> int:
         """
         Takes a variety of inputs and returns its integer equivalent.
+
             >>> Alchemy.to_int(0)
             0
             >>> Alchemy.to_int(0x000F)
@@ -80,6 +82,7 @@ class Alchemy:
     ) -> HexStr:
         """
         Takes a variety of inputs and returns it in its hexadecimal representation.
+
             >>> Alchemy.to_hex(0)
             '0x0'
             >>> Alchemy.to_hex(0x0)
@@ -101,6 +104,7 @@ class Alchemy:
     ) -> str:
         """
         Takes a variety of inputs and returns its string equivalent. Text gets decoded as UTF-8.
+
             >>> Alchemy.to_text(0x636f776dc3b6)
             'cowmö'
             >>> Alchemy.to_text(b'cowm\xc3\xb6')
@@ -116,6 +120,7 @@ class Alchemy:
     def to_json(obj: Dict[Any, Any]) -> str:
         """
         Takes a variety of inputs and returns its JSON equivalent.
+
             >>> Alchemy.to_json({'one': 1})
             '{"one": 1}'
         """
@@ -126,6 +131,7 @@ class Alchemy:
     def to_wei(number: Union[int, float, str, decimal.Decimal], unit: str) -> Wei:
         """
         Returns the value in the denomination specified by the ``unit`` argument converted to wei.
+
             >>> Alchemy.to_wei(1, 'ether')
             1000000000000000000
         """
@@ -136,6 +142,7 @@ class Alchemy:
         """
         Returns the value in wei converted to the given currency.
         The value is returned as a ``Decimal`` to ensure precision down to the wei.
+
             >>> Alchemy.from_wei(1000000000000000000, 'ether')
             Decimal('1')
         """
@@ -183,6 +190,7 @@ class Alchemy:
         """
         Returns the Keccak-256 of the given value. Text is encoded to UTF-8 before computing the hash, just like Solidity.
         Any of the following are valid and equivalent:
+
             >>> Alchemy.keccak(0x747874)
             >>> Alchemy.keccak(b'\x74\x78\x74')
             >>> Alchemy.keccak(hexstr='0x747874')
