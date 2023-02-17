@@ -4,7 +4,7 @@ on: [pull_request]
 
 jobs:
   build:
-    environment: developmenet
+    environment: development
     runs-on: ubuntu-latest
     strategy:
       matrix:
