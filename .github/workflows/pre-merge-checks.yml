@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-
+    environment: cwhaleum-dev
     runs-on: ubuntu-latest
     strategy:
       matrix:
