@@ -4,9 +4,9 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Any
 
 from dataclass_wizard import JSONSerializable, json_field
+from eth_typing import HexStr
 
-from alchemy.types import HexAddress
-from .raw import (
+from alchemy.nft.raw import (
     RawNftContract,
     RawOwnedBaseNft,
     RawOwnedNft,
@@ -14,7 +14,7 @@ from .raw import (
     RawContractBaseNft,
     RawContractForOwner,
 )
-from .types import (
+from alchemy.nft.types import (
     NftSpamClassification,
     NftTokenType,
     OpenSeaSafelistRequestStatus,
@@ -22,6 +22,7 @@ from .types import (
     NftSaleTakerType,
     NftSaleMarketplace,
 )
+from alchemy.types import HexAddress
 
 
 class GlobalJSONMeta(JSONSerializable.Meta):
@@ -276,7 +277,7 @@ class TransferredNft(Nft):
     frm: HexAddress = json_field('from', all=True, default=None)
     to: Optional[HexAddress] = None
     transaction_hash: str = field(default='')
-    block_number: str = field(default='')
+    block_number: HexStr = field(default='')
 
     @classmethod
     def from_dict(cls, data, is_raw=False):

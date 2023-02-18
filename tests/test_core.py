@@ -2,8 +2,7 @@ import os
 import unittest
 
 from alchemy import Alchemy
-from alchemy.core.types import TokenBalanceType
-from alchemy.types import AssetTransfersCategory
+from alchemy.core.types import TokenBalanceType, AssetTransfersCategory
 
 
 class TestAlchemyCore(unittest.TestCase):

@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-import enum
+from alchemy.types import BaseEnum
 
 
-class TokenBalanceType(str, enum.Enum):
+class TokenBalanceType(BaseEnum):
     DEFAULT_TOKENS = 'DEFAULT_TOKENS'
     ERC20 = 'erc20'
 
-    def __str__(self) -> str:
-        return str.__str__(self)
+
+class AssetTransfersCategory(BaseEnum):
+    EXTERNAL = 'external'
+    INTERNAL = 'internal'
+    ERC20 = 'erc20'
+    ERC721 = 'erc721'
+    ERC1155 = 'erc1155'
+    SPECIALNFT = 'specialnft'

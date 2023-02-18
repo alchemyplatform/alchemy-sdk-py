@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Optional, Any, List, cast, NoReturn, overload, Literal
 
 from eth_typing import HexStr
@@ -9,8 +10,8 @@ from web3.types import ENS
 from alchemy.core.models import (
     TokenMetadata,
     TokenBalance,
-    AssetTransfersWithMetadataResult,
-    AssetTransfersResult,
+    AssetTransfersWithMetadata,
+    AssetTransfers,
 )
 from alchemy.core.responses import (
     TokenBalancesResponseErc20,
@@ -19,10 +20,10 @@ from alchemy.core.responses import (
     AssetTransfersWithMetadataResponse,
     TxReceiptsResponse,
 )
-from alchemy.core.types import TokenBalanceType
+from alchemy.core.types import TokenBalanceType, AssetTransfersCategory
 from alchemy.exceptions import AlchemyError
 from alchemy.provider import AlchemyProvider
-from alchemy.types import AssetTransfersCategory, HexAddress, BlockIdentifier, SortingOrder
+from alchemy.types import HexAddress, BlockIdentifier, SortingOrder
 from alchemy.utils import is_valid_address
 
 
@@ -315,14 +316,14 @@ class AlchemyCore(Eth):
         if with_metadata:
             result: AssetTransfersWithMetadataResponse = {
                 'transfers': [
-                    AssetTransfersWithMetadataResult.from_dict(transfer)
+                    AssetTransfersWithMetadata.from_dict(transfer)
                     for transfer in response['result']['transfers']
                 ]
             }
         else:
             result: AssetTransfersResponse = {
                 'transfers': [
-                    AssetTransfersResult.from_dict(transfer)
+                    AssetTransfers.from_dict(transfer)
                     for transfer in response['result']['transfers']
                 ]
             }

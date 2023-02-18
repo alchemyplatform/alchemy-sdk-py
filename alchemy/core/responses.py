@@ -3,20 +3,20 @@ from typing import TypedDict, List, Optional
 from web3.types import TxReceipt
 
 from alchemy.core.models import (
-    AssetTransfersResult,
-    AssetTransfersWithMetadataResult,
+    AssetTransfers,
+    AssetTransfersWithMetadata,
     TokenBalance,
 )
 from alchemy.types import HexAddress
 
 
 class AssetTransfersResponse(TypedDict):
-    transfers: List[AssetTransfersResult]
+    transfers: List[AssetTransfers]
     page_key: Optional[str]
 
 
 class AssetTransfersWithMetadataResponse(TypedDict):
-    transfers: List[AssetTransfersWithMetadataResult]
+    transfers: List[AssetTransfersWithMetadata]
     page_key: Optional[str]
 
 

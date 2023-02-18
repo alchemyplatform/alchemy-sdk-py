@@ -1,4 +1,17 @@
-from .main import AlchemyNFT
-from .types import NftFilters
+from alchemy.nft.main import AlchemyNFT
+from alchemy.nft.types import (
+    NftFilters,
+    NftOrdering,
+    NftSaleMarketplace,
+    NftSaleTakerType,
+    TransfersForOwnerTransferType,
+)
 
-__all__ = ['AlchemyNFT', 'NftFilters']
+__all__ = [
+    'AlchemyNFT',
+    'NftFilters',
+    'NftOrdering',
+    'NftSaleMarketplace',
+    'NftSaleTakerType',
+    'TransfersForOwnerTransferType',
+]

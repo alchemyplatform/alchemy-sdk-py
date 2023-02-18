@@ -118,11 +118,14 @@ under the `alchemy.nft` namespace:
 - `get_owners_for_nft()`: Get all the owners for a given NFT contract address and a particular token ID.
 - `get_owners_for_contract()`: Get all the owners for a given NFT contract address.
 - `get_minted_nfts()`: Get all the NFTs minted by the owner address.
+- `get_transfers_for_owner()`: Get all the NFT transfers for a given owner address.
+- `get_transfers_for_contract()`: Get all the NFT transfers for a given NFT contract address.
 - `is_spam_contract()`: Check whether the given NFT contract address is a spam contract as defined by Alchemy (see the [NFT API FAQ](https://docs.alchemy.com/alchemy/enhanced-apis/nft-api/nft-api-faq#nft-spam-classification))
 - `get_spam_contracts()`: Returns a list of all spam contracts marked by Alchemy.
 - `refresh_contract()`: Enqueues the specified contract address to have all token ids' metadata refreshed.
 - `get_floor_price()`: Return the floor prices of a NFT contract by marketplace.
 - `compute_rarity()`: Get the rarity of each attribute of an NFT.
+- `get_nft_sales()`: Returns NFT sales that have happened through on-chain marketplaces.
 
 ### Pagination
 

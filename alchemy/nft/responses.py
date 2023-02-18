@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TypedDict, List, Optional
 
-from .models import (
+from alchemy.nft.models import (
     OwnedNft,
     OwnedBaseNft,
     Nft,

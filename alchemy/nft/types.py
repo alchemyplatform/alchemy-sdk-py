@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import enum
 from typing import TypedDict, Union, Literal
 from typing_extensions import NotRequired
 
 from alchemy.exceptions import AlchemyError
+from alchemy.types import BaseEnum
 
 TokenID = Union[str, int]
 NftSpamClassification = Union[
@@ -19,14 +19,13 @@ NftSpamClassification = Union[
 ]
 
 
-class OpenSeaSafelistRequestStatus(str, enum.Enum):
+class OpenSeaSafelistRequestStatus(BaseEnum):
+    """An OpenSea collection's approval status."""
+
     VERIFIED = 'verified'
     APPROVED = 'approved'
     REQUESTED = 'requested'
     NOT_REQUESTED = 'not_requested'
-
-    def __str__(self) -> str:
-        return str.__str__(self)
 
     @classmethod
     def return_value(cls, value):
@@ -36,13 +35,12 @@ class OpenSeaSafelistRequestStatus(str, enum.Enum):
             return None
 
 
-class NftTokenType(str, enum.Enum):
+class NftTokenType(BaseEnum):
+    """An enum for specifying the token type on NFTs."""
+
     ERC721 = 'ERC721'
     ERC1155 = 'ERC1155'
     UNKNOWN = 'UNKNOWN'
-
-    def __str__(self) -> str:
-        return str.__str__(self)
 
     @classmethod
     def return_value(cls, value):
@@ -52,31 +50,34 @@ class NftTokenType(str, enum.Enum):
             return cls.UNKNOWN
 
 
-class NftFilters(str, enum.Enum):
+class NftFilters(BaseEnum):
+    """
+    Enum of NFT filters that can be applied to a get_nfts_for_owner or a
+    get_contracts_for_owner request.
+    """
+
     SPAM = 'SPAM'
     AIRDROPS = 'AIRDROPS'
 
-    def __str__(self) -> str:
-        return str.__str__(self)
 
+class NftOrdering(BaseEnum):
+    """
+    Enum of ordering that can be applied to a get_nfts_for_owner or a
+    get_contracts_for_owner request.
+    """
 
-class NftOrdering(str, enum.Enum):
     TRANSFERTIME = 'TRANSFERTIME'
 
-    def __str__(self) -> str:
-        return str.__str__(self)
 
+class RefreshState(BaseEnum):
+    """The current state of the NFT contract refresh process."""
 
-class RefreshState(str, enum.Enum):
     DOES_NOT_EXIST = 'does_not_exist'
     ALREADY_QUEUED = 'already_queued'
     IN_PROGRESS = 'in_progress'
     FINISHED = 'finished'
     QUEUED = 'queued'
     QUEUE_FAILED = 'queue_failed'
-
-    def __str__(self) -> str:
-        return str.__str__(self)
 
     @classmethod
     def return_value(cls, value):
@@ -87,6 +88,11 @@ class RefreshState(str, enum.Enum):
 
 
 class NftMetadataBatchToken(TypedDict):
+    """
+    Represents an NFT token to fetch metadata for in a
+    get_nft_metadata_batch method.
+    """
+
     contract_address: str
     token_id: TokenID
     token_type: NotRequired[
@@ -94,16 +100,17 @@ class NftMetadataBatchToken(TypedDict):
     ]
 
 
-class NftSaleMarketplace(str, enum.Enum):
+class NftSaleMarketplace(BaseEnum):
+    """
+    Enum representing the supported NFT marketplaces by the get_nft_sales method.
+    """
+
     SEAPORT = 'seaport'
     LOOKSRARE = 'looksrare'
     X2Y2 = 'x2y2'
     WYVERN = 'wyvern'
     CRYPTOPUNKS = 'cryptopunks'
     UNKNOWN = 'unknown'
-
-    def __str__(self) -> str:
-        return str.__str__(self)
 
     @classmethod
     def return_value(cls, value):
@@ -113,9 +120,20 @@ class NftSaleMarketplace(str, enum.Enum):
             return cls.UNKNOWN
 
 
-class NftSaleTakerType(str, enum.Enum):
+class NftSaleTakerType(BaseEnum):
+    """
+    Enum for specifying the taker type for the get_nft_sales method.
+    """
+
     BUYER = 'buyer'
     SELLER = 'seller'
 
-    def __str__(self) -> str:
-        return str.__str__(self)
+
+class TransfersForOwnerTransferType(BaseEnum):
+    """
+    The type of transfer for the request. Note that using `TO` will also include
+    NFTs that were minted by the owner.
+    """
+
+    TO = 'TO'
+    FROM = 'FROM'

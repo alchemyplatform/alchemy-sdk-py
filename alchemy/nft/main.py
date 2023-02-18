@@ -7,6 +7,9 @@ from web3 import Web3
 from web3.types import ENS
 
 from alchemy.core import AlchemyCore
+from alchemy.core.models import AssetTransfers
+from alchemy.core.responses import AssetTransfersResponse
+from alchemy.core.types import AssetTransfersCategory
 from alchemy.dispatch import api_request
 from alchemy.exceptions import AlchemyError
 from alchemy.nft.models import (
@@ -23,25 +26,7 @@ from alchemy.nft.models import (
     TransferredNft,
     NftSale,
 )
-from alchemy.nft.types import (
-    TokenID,
-    NftTokenType,
-    NftFilters,
-    NftOrdering,
-    NftMetadataBatchToken,
-    NftSaleMarketplace,
-    NftSaleTakerType,
-)
-from alchemy.provider import AlchemyProvider
-from alchemy.types import (
-    HexAddress,
-    AlchemyApiType,
-    ETH_NULL_ADDRESS,
-    BlockIdentifier,
-    SortingOrder,
-)
-from alchemy.utils import is_valid_address, dict_keys_to_camel
-from .raw import (
+from alchemy.nft.raw import (
     RawNftContract,
     RawBaseNftsForContractResponse,
     RawNftsForContractResponse,
@@ -51,7 +36,7 @@ from .raw import (
     RawNftsResponse,
     RawGetNftSalesResponse,
 )
-from .responses import (
+from alchemy.nft.responses import (
     OwnedNftsResponse,
     OwnedBaseNftsResponse,
     NftContractNftsResponse,
@@ -62,7 +47,25 @@ from .responses import (
     TransfersNftResponse,
     NftSalesResponse,
 )
-from .utils import token_type_to_category, get_tokens_from_transfers
+from alchemy.nft.types import (
+    TokenID,
+    NftTokenType,
+    NftFilters,
+    NftOrdering,
+    NftMetadataBatchToken,
+    NftSaleMarketplace,
+    NftSaleTakerType,
+    TransfersForOwnerTransferType,
+)
+from alchemy.provider import AlchemyProvider
+from alchemy.types import (
+    HexAddress,
+    AlchemyApiType,
+    ETH_NULL_ADDRESS,
+    BlockIdentifier,
+    SortingOrder,
+)
+from alchemy.utils import is_valid_address, dict_keys_to_camel
 
 
 class AlchemyNFT:
@@ -83,6 +86,7 @@ class AlchemyNFT:
         """Initializes class attributes"""
         self.provider: AlchemyProvider = cast(AlchemyProvider, web3.provider)
         self.core: AlchemyCore = AlchemyCore(web3)
+        self.ens = web3.ens
 
     @property
     def url(self) -> str:
@@ -442,6 +446,78 @@ class AlchemyNFT:
         }
         return result
 
+    def get_transfers_for_owner(
+        self,
+        owner: HexAddress | ENS,
+        transfer_type: TransfersForOwnerTransferType,
+        contract_addresses: Optional[List[HexAddress]] = None,
+        token_type: Optional[
+            Literal[NftTokenType.ERC1155] | Literal[NftTokenType.ERC721]
+        ] = None,
+        page_key: Optional[str] = None,
+    ) -> TransfersNftResponse:
+        """
+        Gets all NFT transfers for a given owner's address.
+
+        :param owner: The owner to get transfers for.
+        :param transfer_type: Whether to get transfers to or from the owner address.
+        :param contract_addresses: List of NFT contract addresses to filter mints by.
+            If omitted, defaults to all contract addresses.
+        :param token_type: Filter mints by ERC721 vs ERC1155 contracts.
+            If omitted, defaults to all NFTs.
+        :param page_key: Optional page key to use for pagination.
+        :return: dict (list of TransferredNft, page_key)
+        """
+
+        if transfer_type == TransfersForOwnerTransferType.TO:
+            address = {'to_address': self.ens.address(owner) or owner}
+        else:
+            address = {'from_address': self.ens.address(owner) or owner}
+
+        response = self.core.get_asset_transfers(
+            contract_addresses=contract_addresses,
+            category=self._nft_token_type_to_category(token_type),
+            max_count=100,
+            page_key=page_key,
+            src_method='getTransfersForOwner',
+            **address,
+        )
+        return self._get_nfts_for_transfers(response)
+
+    def get_transfers_for_contract(
+        self,
+        contract: HexAddress,
+        from_block: BlockIdentifier = 0x0,
+        to_block: BlockIdentifier = 'latest',
+        order: SortingOrder = 'asc',
+        page_key: Optional[str] = None,
+    ) -> TransfersNftResponse:
+        """
+        Gets all NFT transfers for a given NFT contract address.
+
+        Defaults to all transfers for the contract. To get transfers for a specific
+        block range, use from_block, to_block.
+
+        :param contract: The NFT contract to get transfers for.
+        :param from_block: Starting block (inclusive) to get transfers from.
+        :param to_block: Ending block (inclusive) to get transfers from.
+        :param order: Whether to return results in ascending or descending order
+            by block number. Defaults to ascending if omitted.
+        :param page_key: Optional page key to use for pagination.
+        :return: dict (list of TransferredNft, page_key)
+        """
+        response = self.core.get_asset_transfers(
+            from_block=from_block,
+            to_block=to_block,
+            category=self._nft_token_type_to_category(),
+            contract_addresses=[contract],
+            order=order,
+            max_count=100,
+            page_key=page_key,
+            src_method='getTransfersForContract',
+        )
+        return self._get_nfts_for_transfers(response)
+
     def get_minted_nfts(
         self,
         owner: HexAddress | ENS,
@@ -460,27 +536,18 @@ class AlchemyNFT:
         :param token_type: Filter mints by ERC721 vs ERC1155 contracts.
             If omitted, defaults to all NFTs.
         :param page_key: Optional page key to use for pagination.
-        :return: dict (list of the minted NFTs for the provided owner address, page_key)
+        :return: dict (list of TransferredNft, page_key)
         """
         response = self.core.get_asset_transfers(
             from_address=ETH_NULL_ADDRESS,
-            to_address=owner,
+            to_address=self.ens.address(owner) or owner,
             contract_addresses=contract_addresses,
-            category=token_type_to_category(token_type),
+            category=self._nft_token_type_to_category(token_type),
             max_count=100,
             page_key=page_key,
             src_method='getMintedNfts',
         )
-        metadata_transfers = list(get_tokens_from_transfers(response['transfers']))
-        tokens = list(map(itemgetter('token'), metadata_transfers))
-        nfts: List[Nft] = self._get_nft_metadata_batch(tokens)
-        transferred_nfts = []
-        for nft, transfer in zip(nfts, metadata_transfers):
-            transferred_nfts.append(
-                TransferredNft.from_dict({**nft.to_dict(), **transfer['metadata']})
-            )
-
-        return {'nfts': transferred_nfts, 'page_key': response['page_key']}
+        return self._get_nfts_for_transfers(response)
 
     def get_nft_sales(
         self,
@@ -619,6 +686,65 @@ class AlchemyNFT:
             config=self.provider.config,
         )
         return [NftAttributeRarity.from_dict(attr) for attr in response]
+
+    def _get_nfts_for_transfers(
+        self, response: AssetTransfersResponse
+    ) -> TransfersNftResponse:
+        def parse_transfers(transfers: List[AssetTransfers]):
+            for transfer in transfers:
+                if not transfer.raw_contract.address:
+                    continue
+
+                metadata = {
+                    'from': transfer.frm,
+                    'to': transfer.to,
+                    'transactionHash': transfer.hash,
+                    'blockNumber': transfer.block_num,
+                }
+                if transfer.category == AssetTransfersCategory.ERC1155:
+                    for meta in transfer.erc1155_metadata:
+                        token = {
+                            'contractAddress': transfer.raw_contract.address,
+                            'tokenId': meta.token_id,
+                            'tokenType': NftTokenType.ERC1155,
+                        }
+                        yield {'metadata': metadata, 'token': token}
+                else:
+                    token = {
+                        'contractAddress': transfer.raw_contract.address,
+                        'tokenId': transfer.token_id,
+                    }
+                    if transfer.category == AssetTransfersCategory.ERC721:
+                        token['tokenType'] = NftTokenType.ERC721
+                    yield {'metadata': metadata, 'token': token}
+
+        metadata_transfers = list(parse_transfers(response['transfers']))
+        if not metadata_transfers:
+            return {'nfts': [], 'page_key': response['page_key']}
+
+        tokens = list(map(itemgetter('token'), metadata_transfers))
+        nfts: List[Nft] = self._get_nft_metadata_batch(tokens)
+        transferred_nfts = []
+        for nft, transfer in zip(nfts, metadata_transfers):
+            transferred_nfts.append(
+                TransferredNft.from_dict({**nft.to_dict(), **transfer['metadata']})
+            )
+        return {'nfts': transferred_nfts, 'page_key': response['page_key']}
+
+    @staticmethod
+    def _nft_token_type_to_category(
+        token_type: Optional[NftTokenType] = None,
+    ) -> List[AssetTransfersCategory]:
+        if token_type == NftTokenType.ERC721:
+            return [AssetTransfersCategory.ERC721]
+        elif token_type == NftTokenType.ERC1155:
+            return [AssetTransfersCategory.ERC1155]
+        else:
+            return [
+                AssetTransfersCategory.ERC721,
+                AssetTransfersCategory.ERC1155,
+                AssetTransfersCategory.SPECIALNFT,
+            ]
 
     def _get_nft_metadata(
         self,

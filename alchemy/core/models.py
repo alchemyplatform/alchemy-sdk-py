@@ -5,7 +5,8 @@ from typing import Optional, List
 
 from dataclass_wizard import JSONSerializable, json_field
 
-from alchemy.types import HexAddress, AssetTransfersCategory
+from alchemy.core.types import AssetTransfersCategory
+from alchemy.types import HexAddress
 
 
 class GlobalJSONMeta(JSONSerializable.Meta):
@@ -26,7 +27,7 @@ class ERC1155Metadata(JSONSerializable):
 
 
 @dataclass
-class AssetTransfersResult(JSONSerializable):
+class AssetTransfers(JSONSerializable):
     unique_id: str
     category: AssetTransfersCategory
     block_num: str
@@ -47,7 +48,7 @@ class AssetTransfersMetadata(JSONSerializable):
 
 
 @dataclass
-class AssetTransfersWithMetadataResult(AssetTransfersResult):
+class AssetTransfersWithMetadata(AssetTransfers):
     metadata: AssetTransfersMetadata = field(default_factory=dict)
 
 
