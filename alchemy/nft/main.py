@@ -234,7 +234,7 @@ class AlchemyNFT:
         page_size: Optional[int] = None,
         token_uri_timeout: Optional[int] = None,
         order_by: Optional[NftOrdering] = None,
-    ) -> [OwnedNftsResponse | OwnedBaseNftsResponse]:
+    ) -> OwnedNftsResponse | OwnedBaseNftsResponse:
         return self._get_nfts_for_owner(
             owner,
             omitMetadata=omit_metadata,
@@ -330,7 +330,7 @@ class AlchemyNFT:
 
     def get_owners_for_nft(
         self, contract_address: HexAddress, token_id: TokenID
-    ) -> List[str]:
+    ) -> List[Optional[str]]:
         """
         Gets all the owners for a given NFT contract address and token ID.
 
@@ -469,19 +469,19 @@ class AlchemyNFT:
         :return: dict (list of TransferredNft, page_key)
         """
 
+        params = {
+            'contract_addresses': contract_addresses,
+            'category': self._nft_token_type_to_category(token_type),
+            'max_count': 100,
+            'page_key': page_key,
+            'src_method': 'getTransfersForOwner',
+        }
         if transfer_type == TransfersForOwnerTransferType.TO:
-            address = {'to_address': self.ens.address(owner) or owner}
+            params['to_address'] = self.ens.address(owner) or owner
         else:
-            address = {'from_address': self.ens.address(owner) or owner}
+            params['from_address'] = self.ens.address(owner) or owner
 
-        response = self.core.get_asset_transfers(
-            contract_addresses=contract_addresses,
-            category=self._nft_token_type_to_category(token_type),
-            max_count=100,
-            page_key=page_key,
-            src_method='getTransfersForOwner',
-            **address,
-        )
+        response = self.core.get_asset_transfers(**params)
         return self._get_nfts_for_transfers(response)
 
     def get_transfers_for_contract(
@@ -750,7 +750,7 @@ class AlchemyNFT:
         self,
         contract_address: HexAddress,
         token_id: TokenID,
-        token_type: NftTokenType,
+        token_type: Optional[NftTokenType],
         token_uri_timeout: Optional[int],
         refresh_cache: bool,
         src_method: str = 'getNftMetadata',
@@ -885,7 +885,7 @@ class AlchemyNFT:
         contract_address: HexAddress,
         token_id: TokenID,
         src_method: str = 'getOwnersForNft',
-    ) -> List[str | None]:
+    ) -> List[Optional[str]]:
         response = api_request(
             url=f'{self.url}/getOwnersForToken',
             method_name=src_method,

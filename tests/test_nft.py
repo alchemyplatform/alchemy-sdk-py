@@ -13,7 +13,9 @@ from alchemy.nft.types import (
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
+        self.alchemy = Alchemy(
+            api_key=os.environ.get('API_KEY', 'lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
+        )
         self.owner = 'vitalik.eth'
 
     def test_get_nft_metadata(self):
@@ -177,13 +179,12 @@ class TestAlchemyNFT(unittest.TestCase):
         self.assertIsInstance(owners[0].token_balances[0].balance, int)
 
     def test_get_minted_nfts(self):
-        owner = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
-        resp = self.alchemy.nft.get_minted_nfts(owner=owner)
+        resp = self.alchemy.nft.get_minted_nfts(owner=self.owner)
         self.assertIsNotNone(resp.get('page_key'))
         self.assertTrue(resp['nfts'])
 
         resp_2 = self.alchemy.nft.get_minted_nfts(
-            owner=owner, page_key=resp['page_key']
+            owner=self.owner, page_key=resp['page_key']
         )
         self.assertTrue(resp_2['nfts'])
         self.assertNotEqual(resp['nfts'], resp_2['nfts'])

@@ -129,14 +129,16 @@ class AlchemyCore(Eth):
                 params=[address, data],
                 method_name='getTokenBalances',
             )
-            result: TokenBalancesResponse = {'address': response['result']['address']}
             token_balances = []
             if response['result'].get('tokenBalances'):
                 token_balances = [
                     TokenBalance.from_dict(balance)
                     for balance in response['result']['tokenBalances']
                 ]
-            result['token_balances'] = token_balances
+            result: TokenBalancesResponse = {
+                'address': response['result']['address'],
+                'token_balances': token_balances,
+            }
             return result
 
         else:
@@ -151,17 +153,17 @@ class AlchemyCore(Eth):
                 params=params,
                 method_name='getTokenBalances',
             )
-            result: TokenBalancesResponseErc20 | TokenBalancesResponse = {
-                'address': response['result']['address']
-            }
             token_balances = []
             if response['result'].get('tokenBalances'):
                 token_balances = [
                     TokenBalance.from_dict(balance)
                     for balance in response['result']['tokenBalances']
                 ]
-            result['token_balances'] = token_balances
-            result['page_key'] = response['result'].get('pageKey')  # type: ignore
+            result: TokenBalancesResponseErc20 | TokenBalancesResponse = {
+                'address': response['result']['address'],
+                'token_balances': token_balances,
+                'page_key': response['result'].get('pageKey'),
+            }
             return result
 
     def get_token_metadata(self, contract_address: HexAddress) -> TokenMetadata:
@@ -187,11 +189,11 @@ class AlchemyCore(Eth):
         to_block: BlockIdentifier = ...,
         from_address: HexAddress | ENS = ...,
         to_address: HexAddress | ENS = ...,
-        contract_addresses: List[HexAddress] = ...,
+        contract_addresses: Optional[List[HexAddress]] = ...,
         order: SortingOrder = ...,
         exclude_zero_value: bool = ...,
         max_count: int | HexStr = ...,
-        page_key: str = ...,
+        page_key: Optional[str] = ...,
         **kwargs: Any,
     ) -> AssetTransfersResponse:
         """
@@ -232,11 +234,11 @@ class AlchemyCore(Eth):
         to_block: BlockIdentifier = ...,
         from_address: HexAddress | ENS = ...,
         to_address: HexAddress | ENS = ...,
-        contract_addresses: List[HexAddress] = ...,
+        contract_addresses: Optional[List[HexAddress]] = ...,
         order: SortingOrder = ...,
         exclude_zero_value: bool = ...,
         max_count: int | HexStr = ...,
-        page_key: str = ...,
+        page_key: Optional[str] = ...,
         **kwargs: Any,
     ) -> AssetTransfersWithMetadataResponse:
         """
@@ -332,8 +334,8 @@ class AlchemyCore(Eth):
 
     def get_transaction_receipts(
         self,
-        block_number: Optional[int, HexStr] = None,
-        block_hash: Optional[HexStr, str] = None,
+        block_number: Optional[HexStr | int] = None,
+        block_hash: Optional[HexStr | str] = None,
     ) -> TxReceiptsResponse:
         """
         Gets all transaction receipts for a given block by number or block hash.

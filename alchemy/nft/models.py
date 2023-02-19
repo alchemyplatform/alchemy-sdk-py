@@ -122,11 +122,11 @@ class NftContract(BaseNftContract):
 
 @dataclass
 class ContractForOwner(NftContract):
-    total_balance: float = field(default=None)
-    num_distinct_tokens_owned: int = field(default=None)
-    is_spam: bool = field(default=None)
-    token_id: str = field(default=None)
-    media: List[Media] = field(default_factory=list)  # TODO: js api no List
+    total_balance: float = field(default_factory=float)
+    num_distinct_tokens_owned: int = field(default_factory=int)
+    is_spam: bool = field(default_factory=bool)
+    token_id: str = field(default_factory=str)
+    media: List[Media] = field(default_factory=list)
 
     @classmethod
     def from_raw(cls, raw: RawContractForOwner) -> ContractForOwner:
@@ -277,7 +277,7 @@ class TransferredNft(Nft):
     frm: HexAddress = json_field('from', all=True, default=None)
     to: Optional[HexAddress] = None
     transaction_hash: str = field(default='')
-    block_number: HexStr = field(default='')
+    block_number: HexStr = field(default=HexStr(''))
 
     @classmethod
     def from_dict(cls, data, is_raw=False):
