@@ -16,7 +16,7 @@ class AlchemyConfig:
     :var network: The network to use for Alchemy
     :var max_retries: The maximum number of retries to perform
     :var url: The optional hardcoded URL to send requests to instead of
-    using the network and api_key.
+        using the network and api_key.
     :var request_timeout: The optional Request timeout provided in `s`
         for NFT and NOTIFY API. Defaults is None.
     """
