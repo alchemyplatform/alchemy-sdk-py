@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from typing import Optional, cast
+from typing import Optional, cast, Union
 
-from eth_typing import HexStr, Hash32
+from eth_typing.evm import Hash32
+from eth_typing.encoding import HexStr
 from web3 import Web3
 from web3.types import (
     TxData,
     TxParams,
-    HexBytes,
     Wei,
     BlockIdentifier,
     TxReceipt,
 )
+from hexbytes import HexBytes
 
 from alchemy.core import AlchemyCore
 from alchemy.provider import AlchemyProvider
@@ -41,7 +42,7 @@ class AlchemyTransact:
         transaction: str,
         max_block_number: Optional[int] = None,
         options: Optional[SendPrivateTransactionOptions] = None,
-    ) -> str:
+    ) -> Union[str, None]:
         """
         Used to send a single transaction to Flashbots. Flashbots will attempt to
         send the transaction to miners for the next 25 blocks.
@@ -79,7 +80,7 @@ class AlchemyTransact:
             params=[{'txHash': transaction_hash}],
             method_name='cancelPrivateTransaction',
         )
-        return response['result']
+        return response.get('result', False)
 
     def get_transaction(self, transaction_hash: Hash32 | HexBytes | HexStr) -> TxData:
         """
