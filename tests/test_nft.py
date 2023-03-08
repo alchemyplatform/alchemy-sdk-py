@@ -13,9 +13,7 @@ from alchemy.nft.types import (
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy(
-            api_key=os.environ.get('API_KEY', 'lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
-        )
+        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
         self.owner = 'vitalik.eth'
 
     def test_get_nft_metadata(self):
