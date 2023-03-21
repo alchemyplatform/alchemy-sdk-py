@@ -65,3 +65,15 @@ class TokenMetadata(JSONSerializable):
     symbol: Optional[str] = None
     decimals: Optional[int] = None
     logo: Optional[str] = None
+
+
+@dataclass
+class OwnedToken(JSONSerializable):
+    contract_address: str
+    raw_balance: Optional[str] = None
+    balance: Optional[str] = None
+    name: Optional[str] = None
+    symbol: Optional[str] = None
+    decimals: Optional[int] = None
+    logo: Optional[str] = None
+    error: Optional[str] = None

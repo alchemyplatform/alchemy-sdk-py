@@ -123,6 +123,7 @@ class NftContract(BaseNftContract):
 @dataclass
 class ContractForOwner(NftContract):
     total_balance: float = field(default_factory=float)
+    title: str = field(default_factory=str)
     num_distinct_tokens_owned: int = field(default_factory=int)
     is_spam: bool = field(default_factory=bool)
     token_id: str = field(default_factory=str)
