@@ -34,3 +34,4 @@ class AlchemyApiType(BaseEnum):
     BASE = 0
     NFT = 1
     WEBHOOK = 2
+    WSS = 3

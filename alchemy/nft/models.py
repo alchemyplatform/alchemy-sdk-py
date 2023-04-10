@@ -332,7 +332,7 @@ class NftSale(JSONSerializable):
     royalty_fee: Optional[NftSaleFeeData] = None
 
     @classmethod
-    def from_dict(cls, data):
+    def from_raw(cls, data):
         data['taker'] = data['taker'].lower()
         data['marketplace'] = NftSaleMarketplace.return_value(data['marketplace'])
-        return super().from_dict(data)
+        return cls.from_dict(data)

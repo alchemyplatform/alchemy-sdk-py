@@ -60,5 +60,7 @@ class AlchemyConfig:
             return f'https://{self.network}.g.alchemy.com/nft/v2/{self.api_key}'
         elif api_type == AlchemyApiType.BASE:
             return f'https://{self.network}.g.alchemy.com/v2/{self.api_key}'
+        elif api_type == AlchemyApiType.WSS:
+            return f'wss://{self.network}.g.alchemy.com/v2/{self.api_key}'
         else:
             raise AlchemyError(f'Wrong api_type: {api_type}')

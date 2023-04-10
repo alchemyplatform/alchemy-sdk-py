@@ -624,7 +624,7 @@ class AlchemyNFT:
         )
         result: NftSalesResponse = {
             'nft_sales': [
-                NftSale.from_dict(nft_sale) for nft_sale in response['nftSales']
+                NftSale.from_raw(nft_sale) for nft_sale in response['nftSales']
             ],
             'page_key': response.get('pageKey'),
         }
