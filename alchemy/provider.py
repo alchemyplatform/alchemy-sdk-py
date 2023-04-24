@@ -2,7 +2,7 @@ import itertools
 import json
 import threading
 import uuid
-from typing import Any, Union, Optional
+from typing import Any, Union, Optional, Callable, List
 
 import backoff
 import websocket
