@@ -1,7 +1,7 @@
 import enum
 from typing import Union, Literal
 
-from eth_typing import HexStr
+from eth_typing.encoding import HexStr
 from web3.types import LatestBlockParam
 
 ETH_NULL_ADDRESS = '0x0000000000000000000000000000000000000000'

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Optional, Any, List, cast, NoReturn, overload, Literal
+from typing import Optional, Any, List, cast, NoReturn, overload, Literal, Union, Dict
 
-from eth_typing import HexStr
 from web3 import Web3
 from web3.eth import Eth
 from web3.types import ENS
+from eth_typing.encoding import HexStr
 
 from alchemy.core.models import (
     TokenMetadata,
@@ -142,7 +142,7 @@ class AlchemyCore(Eth):
             return result
 
         else:
-            params = [address]
+            params: List[Union[str, Dict[str, str]]] = [address]
             token_type = TokenBalanceType.ERC20 if not data else data
             params.append(token_type)
             if data == TokenBalanceType.ERC20 and page_key:
@@ -362,7 +362,9 @@ class AlchemyCore(Eth):
         )
         return response['result'].get('receipts')
 
-    def send(self, method: str, params: Any, headers: Optional[dict] = None) -> Any:
+    def send(
+        self, method: str, params: List[Any], headers: Optional[dict] = None
+    ) -> Any:
         """
         Allows sending a raw message to the Alchemy backend.
 
