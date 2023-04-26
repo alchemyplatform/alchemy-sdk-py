@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import asyncio
 import itertools
 import json
 import threading
@@ -5,7 +8,7 @@ import uuid
 from typing import Any, Union, Optional, Callable, List
 
 import backoff
-import websocket
+import websockets
 from requests import HTTPError
 from web3.providers import JSONBaseProvider
 from web3.types import RPCEndpoint, RPCResponse
@@ -66,232 +69,184 @@ class AlchemyWebsocketProvider:
     """
 
     def __init__(self, config: AlchemyConfig):
+        self.uri = config.get_request_url(AlchemyApiType.WSS)
         self.request_counter = itertools.count()
-        self.ws_thread = None
-        self.url = config.get_request_url(AlchemyApiType.WSS)
-        self.ws = websocket.WebSocket()
-        self._listeners = {'logs': [], 'newHeads': [], 'newPendingTransactions': []}
-        self.virtual_subscriptions_by_id = {}
-        # self.connect()
+        self.connection = None
+        self.subscriptions: List[Subscription] = []
+        self.loop = asyncio.new_event_loop()
+        self.connect()
 
-    @backoff.on_exception(
-        backoff.expo,
-        websocket.WebSocketConnectionClosedException,
-        max_tries=5,
-        max_value=30,
-        on_backoff=lambda details: print(
-            f"Connection failed, retrying in {details['wait']} seconds..."
-        ),
-        on_giveup=lambda details: print('Max retries reached, giving up.'),
-    )
     def connect(self):
-        """
-        Connect to the WebSocket and start a new thread to listen for messages.
-        """
-        if self.ws.connected:
-            return
+        if not self.connection:
+            self.loop.run_until_complete(self._establish_connection())
+            threading.Thread(target=self._run_event_loop, daemon=True).start()
 
-        self.ws.connect(self.url)
-        self.ws_thread = threading.Thread(target=self._listen_for_messages)
-        self.ws_thread.start()
-        if self.virtual_subscriptions_by_id:
-            self._resubscribe()
+    def _run_event_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self._listen())
 
-    def _listen_for_messages(self):
-        """
-        Listen for messages from the WebSocket and handle them.
-        """
+    async def _listen(self):
+        while True:
+            try:
+                message = await self.connection.recv()
+                await self._handle_message(message)
+            except websockets.ConnectionClosed:
+                print("Connection closed. Reconnecting...")
+                await self._attempt_reconnection()
+
+    async def _attempt_reconnection(self):
         try:
-            while self.is_connected():
-                try:
-                    message = self.ws.recv()
-                    if message:
-                        self._handle_message(message)
-                    else:
-                        self.ws.close()
-                        break
-                except websocket.WebSocketException as e:
-                    print(f'WebSocket error: {e}')
-                    self.ws.close()
-                    break
+            await self._establish_connection()
+            await self._resubscribe()
         except Exception as e:
-            print(f'Error in _listen_for_messages: {e}')
-            self.ws.close()
-        finally:
-            self.connect()
+            print(f"Error during reconnection: {e}")
 
-    def _handle_message(self, message):
-        """
-        Handle incoming WebSocket messages by executing the appropriate listener.
-        """
+    @backoff.on_exception(backoff.expo, Exception, max_tries=10)
+    async def _establish_connection(self):
+        try:
+            self.connection = await websockets.connect(self.uri)
+            print('Connection successful')
+        except Exception as e:
+            print(f"Failed to establish connection. Retrying... Error: {e}")
+            raise
+
+    async def _handle_message(self, message):
         data = json.loads(message)
-        if 'params' in data and 'subscription' in data['params']:
-            subscription_id = data['params']['subscription']
-            for event_type, listeners in self._listeners.items():
-                listener_executed = False
-                for listener in listeners:
-                    if listener['subscription_id'] == subscription_id:
-                        listener['callback'](data['params']['result'])
-                        listener_executed = True
+        if "result" in data:
+            # Handle subscription confirmation message
+            for subscription in self.subscriptions:
+                if subscription.id == data['id']:
+                    subscription.physical_id = data["result"]
+                    break
+        else:
+            subscription_id = data.get("params", {}).get("subscription")
+            for subscription in self.subscriptions:
+                if subscription.physical_id == subscription_id:
+                    if subscription.handlers:
+                        for handler in subscription.handlers:
+                            handler(data["params"]["result"])
                         break
-                if listener_executed:
-                    break
 
-    def _subscribe(self, event_type, *args):
-        """
-        Subscribe to the specified event type.
-        """
-        self.ws.send(
-            json.dumps(
-                {
-                    'jsonrpc': '2.0',
-                    'id': next(self.request_counter),
-                    'method': 'eth_subscribe',
-                    'params': [event_type],
-                }
+    async def _resubscribe(self):
+        for subscription in self.subscriptions:
+            await self._send_subscribe_event(
+                subscription.event_type, subscription.params, subscription.id
             )
-        )
-        response = self.ws.recv()
-        subscription_id = json.loads(response).get('params').get('subscription')
-        return subscription_id
 
-    def _unsubscribe(self, subscription_id):
-        """
-        Unsubscribe from the specified subscription ID.
-        """
-        self.ws.send(
-            json.dumps(
-                {
-                    'jsonrpc': '2.0',
-                    'id': next(self.request_counter),
-                    'method': 'eth_unsubscribe',
-                    'params': [subscription_id],
-                }
-            )
-        )
-        response = self.ws.recv()
-        return json.loads(response).get('result')
+    def unsubscribe_all(self):
+        for subscription in self.subscriptions:
+            subscription.unsubscribe()
 
-    def _resubscribe(self):
-        """
-        Resubscribe to all virtual subscriptions.
-        """
-        for (
-            virtual_id,
-            virtual_subscription,
-        ) in self.virtual_subscriptions_by_id.items():
-            event_type = virtual_subscription['event_type']
-            callback = virtual_subscription['callback']
+        self.loop.call_soon_threadsafe(self.loop.stop)
 
-            physical_id = self._subscribe(event_type, callback)
-            virtual_subscription['subscription_id'] = physical_id
-
-    def on(self, event_type, callback):
-        """
-        Add an event listener for the specified event type.
-        """
-        self.connect()
-        if event_type not in self._listeners:
-            raise ValueError('Invalid event type')
-
-        subscription_id = self._subscribe(event_type, callback)
+    def subscribe(self, event_type, handler, **params) -> "Subscription":
         virtual_id = str(uuid.uuid4())
-        listener = {
-            'event_type': event_type,
-            'subscription_id': subscription_id,
-            'virtual_id': virtual_id,
-            'callback': callback,
-            'params': [event_type],
-        }
-        self._listeners[event_type].append(listener)
-        self.virtual_subscriptions_by_id[virtual_id] = listener
-        return virtual_id
+        subscription = Subscription(
+            self,
+            uid=virtual_id,
+            physical_id=None,
+            handlers=[handler],
+            params=params,
+            event_type=event_type,
+        )
+        self.subscriptions.append(subscription)
+        future = asyncio.run_coroutine_threadsafe(
+            self._send_subscribe_event(event_type, params, virtual_id), self.loop
+        ).result()
+        return subscription
 
-    def once(self, event_type, callback):
-        """
-        Add a one-time event listener for the specified event type.
-        """
-        self.connect()
-        if event_type not in self._listeners:
-            raise ValueError('Invalid event type')
-
-        def wrapped_callback(result):
-            self.off(event_type, wrapped_callback)
-            callback(result)
-
-        return self.on(event_type, wrapped_callback)
-
-    def off(self, event_type, callback=None):
-        """
-        Remove an event listener for the specified event type.
-        """
-        if event_type not in self._listeners:
-            raise ValueError('Invalid event type')
-
-        if callback is not None:
-            for listener in self._listeners[event_type]:
-                if listener['callback'] == callback:
-                    result = self._unsubscribe(listener['subscription_id'])
-                    if result:
-                        self._listeners[event_type].remove(listener)
-                        del self.virtual_subscriptions_by_id[listener['virtual_id']]
-                    break
-        else:
-            self.remove_all_listeners(event_type)
-
-    def remove_all_listeners(self, event_type=None):
-        """
-        Remove all event listeners for the specified event type or
-        for all event types if none is specified.
-        """
-        if event_type is None:
-            for event, listeners in self._listeners.items():
-                for listener in listeners:
-                    self._unsubscribe(listener['subscription_id'])
-            self._listeners = {'logs': [], 'newHeads': [], 'newPendingTransactions': []}
-            self.virtual_subscriptions_by_id = {}
-            self.ws.close()
-        elif event_type in self._listeners:
-            for listener in self._listeners[event_type]:
-                self._unsubscribe(listener['subscription_id'])
-                del self.virtual_subscriptions_by_id[listener['virtual_id']]
-            self._listeners[event_type] = []
-        else:
-            raise ValueError('Invalid event type')
-
-    def listener_count(self, event_type=None):
-        """
-        Get the number of listeners for the specified event type or
-        for all event types if none is specified.
-        """
-        if event_type is None:
-            total_listeners = sum(
-                [len(listeners) for listeners in self._listeners.values()]
-            )
-            return total_listeners
-        elif event_type in self._listeners:
-            return len(self._listeners[event_type])
-        else:
-            raise ValueError('Invalid event type')
-
-    def listeners(self, event_type=None):
-        """
-        Get all event listeners for the specified event type or
-        for all event types if none is specified.
-        """
-        if event_type is None:
-            all_listeners = {
-                key: [listener['callback'] for listener in value]
-                for key, value in self._listeners.items()
+    async def _send_subscribe_event(self, event_type, params, virtual_id):
+        subscribe_request = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": virtual_id,
+                "method": "eth_subscribe",
+                "params": [event_type, params] if params else [event_type],
             }
-            return all_listeners
-        elif event_type in self._listeners:
-            return [listener['callback'] for listener in self._listeners[event_type]]
-        else:
-            raise ValueError('Invalid event type')
+        )
+        await self.connection.send(subscribe_request)
 
-    def is_connected(self):
+    def unsubscribe(self, subscription):
+        asyncio.run_coroutine_threadsafe(
+            self._send_unsubscribe_event(subscription.physical_id), self.loop
+        )
+        self.subscriptions.remove(subscription)
+
+    async def _send_unsubscribe_event(self, subscription_id):
+        unsubscribe_request = {
+            "jsonrpc": "2.0",
+            "id": next(self.request_counter),
+            "method": "eth_unsubscribe",
+            "params": [subscription_id],
+        }
+        await self.connection.send(json.dumps(unsubscribe_request))
+
+    def once(self, event_type, handler, **params) -> "Subscription":
+        def wrapped_handler(result):
+            handler(result)
+            subscription.unsubscribe()
+
+        subscription = self.subscribe(event_type, wrapped_handler, **params)
+        return subscription
+
+
+class Subscription:
+    """
+    Represents a subscription to a specific event in a WebSocket connection.
+
+    The Subscription class provides methods to manage the event handlers associated with the subscription.
+    It allows adding and removing handlers, as well as unsubscribing from the event.
+
+    :var provider: AlchemyWebsocketProvider instance managing the WebSocket connection.
+    :var physical_id: The real identifier of the subscription.
+    :var handlers: Event handler for the subscription.
+    :var id: The virtual subscription id which is used by consumer.
+    :var params: Params of subscription.
+    :var event_type: Event type of subscription.
+    """
+
+    def __init__(
+        self,
+        provider: AlchemyWebsocketProvider,
+        uid: str,
+        physical_id: str | None,
+        handlers: List[Callable],
+        params: dict,
+        event_type,
+    ):
+        self.provider = provider
+        self.id = uid
+        self.physical_id = physical_id
+        self.handlers = handlers
+        self.params = params
+        self.event_type = event_type
+        self.is_active = True
+
+    def unsubscribe(self):
         """
-        Check if the WebSocket is connected.
+        Unsubscribes from the event and removes all event handlers associated with this subscription.
         """
-        return self.ws is not None and self.ws.connected
+        if self.is_active:
+            self.provider.unsubscribe(self)
+            self.is_active = False
+
+    def add_handler(self, handler: Callable):
+        """
+        Adds an event handler to the subscription.
+
+        :var handler: The event handler to be added.
+        """
+        self.handlers.append(handler)
+
+    def remove_handler(self, handler: Callable):
+        """
+        Removes an event handler from the subscription.
+
+        :var handler: The event handler to be removed.
+        """
+        self.handlers.remove(handler)
+
+    def __str__(self):
+        return (
+            f"Subscription: {self.id}, Event: {self.event_type}, Params: {self.params}"
+        )

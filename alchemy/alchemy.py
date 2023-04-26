@@ -13,7 +13,7 @@ from alchemy.nft import AlchemyNFT
 from alchemy.transact import AlchemyTransact
 from alchemy.provider import AlchemyProvider, AlchemyWebsocketProvider
 from alchemy.types import Network
-from alchemy.websockets.main import AlchemyWebSocket
+from alchemy.websocket import AlchemyWebSocket
 
 
 class Alchemy:
