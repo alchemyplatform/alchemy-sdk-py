@@ -77,6 +77,9 @@ class AlchemyWebsocketProvider:
         self.connect()
 
     def connect(self):
+        """
+        Connects to the Alchemy WebSocket server if not already connected.
+        """
         if not self.connection:
             self.loop.run_until_complete(self._establish_connection())
             threading.Thread(target=self._run_event_loop, daemon=True).start()
@@ -86,6 +89,10 @@ class AlchemyWebsocketProvider:
         self.loop.run_until_complete(self._listen())
 
     async def _listen(self):
+        """
+        Listens for incoming messages and handles them.
+        Attempts reconnection if the connection is closed.
+        """
         while True:
             try:
                 message = await self.connection.recv()
@@ -95,6 +102,9 @@ class AlchemyWebsocketProvider:
                 await self._attempt_reconnection()
 
     async def _attempt_reconnection(self):
+        """
+        Attempts to reconnect to the websocket server and resubscribe to events.
+        """
         try:
             await self._establish_connection()
             await self._resubscribe()
@@ -103,6 +113,10 @@ class AlchemyWebsocketProvider:
 
     @backoff.on_exception(backoff.expo, Exception, max_tries=10)
     async def _establish_connection(self):
+        """
+        Attempts to establish a connection to the Alchemy WebSocket server.
+        This method uses exponential backoff for retrying connection attempts.
+        """
         try:
             self.connection = await websockets.connect(self.uri)
             print('Connection successful')
@@ -111,6 +125,11 @@ class AlchemyWebsocketProvider:
             raise
 
     async def _handle_message(self, message):
+        """
+        Handles incoming WebSocket messages.
+
+        :param message: The received WebSocket message.
+        """
         data = json.loads(message)
         if "result" in data:
             # Handle subscription confirmation message
@@ -128,18 +147,32 @@ class AlchemyWebsocketProvider:
                         break
 
     async def _resubscribe(self):
+        """
+        Resubscribes to all events after a reconnection.
+        """
         for subscription in self.subscriptions:
             await self._send_subscribe_event(
                 subscription.event_type, subscription.params, subscription.id
             )
 
     def unsubscribe_all(self):
+        """
+        Unsubscribes all event handlers and stops the event loop.
+        """
         for subscription in self.subscriptions:
             subscription.unsubscribe()
 
         self.loop.call_soon_threadsafe(self.loop.stop)
 
     def subscribe(self, event_type, handler, **params) -> "Subscription":
+        """
+        Subscribes to an event type with the given handler and parameters.
+
+        :param event_type: The event type to subscribe to.
+        :param handler: The event handler to be called when the event is received.
+        :param params: Additional parameters for the event subscription.
+        :return: A Subscription instance.
+        """
         virtual_id = str(uuid.uuid4())
         subscription = Subscription(
             self,
@@ -167,6 +200,11 @@ class AlchemyWebsocketProvider:
         await self.connection.send(subscribe_request)
 
     def unsubscribe(self, subscription):
+        """
+        Unsubscribes a specific subscription.
+
+        :param subscription: The Subscription instance to be unsubscribed.
+        """
         asyncio.run_coroutine_threadsafe(
             self._send_unsubscribe_event(subscription.physical_id), self.loop
         )
@@ -182,6 +220,15 @@ class AlchemyWebsocketProvider:
         await self.connection.send(json.dumps(unsubscribe_request))
 
     def once(self, event_type, handler, **params) -> "Subscription":
+        """
+        Subscribes to an event type with the given handler and parameters, but only triggers the handler once.
+
+        :param event_type: The event type to subscribe to.
+        :param handler: The event handler to be called when the event is received.
+        :param params: Additional parameters for the event subscription.
+        :return: A Subscription instance.
+        """
+
         def wrapped_handler(result):
             handler(result)
             subscription.unsubscribe()
