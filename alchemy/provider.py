@@ -101,7 +101,7 @@ class AlchemyWebsocketProvider:
             try:
                 message = await self.connection.recv()
                 data = json.loads(message)
-                if 'eth_chainId' in data.get('id'):
+                if 'eth_chainId' in data.get('id', ''):
                     await self._handle_heartbeat_response(data)
                 else:
                     await self._handle_message(data)
@@ -138,7 +138,6 @@ class AlchemyWebsocketProvider:
 
         :param message: The received WebSocket message.
         """
-        print(f'Received message: {data}')
         if 'result' in data:
             # Handle subscription confirmation message
             for subscription in self.subscriptions:
