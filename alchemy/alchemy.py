@@ -24,6 +24,7 @@ class Alchemy:
     :var core: Namespace contains the core eth json-rpc calls and Alchemy's Enhanced APIs.
     :var nft: Namespace contains methods for Alchemy's NFT API.
     :var transact: Namespace contains methods for sending transactions and checking on the state of submitted transactions
+    :var ens: Web3 quick access to common Ethereum Name Service functions, like getting the address for a name.
     """
 
     config: AlchemyConfig
@@ -41,7 +42,7 @@ class Alchemy:
     ) -> bytes:
         """
         Takes a variety of inputs and returns its bytes equivalent. Text gets encoded as UTF-8.
-        
+
             >>> Alchemy.to_bytes(0)
             b'\x00'
             >>> Alchemy.to_bytes(0x000F)
@@ -222,6 +223,7 @@ class Alchemy:
         self.core = AlchemyCore(web3)
         self.nft = AlchemyNFT(web3)
         self.transact = AlchemyTransact(web3)
+        self.ens = web3.ens
 
     def isConnected(self) -> bool:
         return self.provider.isConnected()

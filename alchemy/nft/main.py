@@ -249,12 +249,30 @@ class AlchemyNFT:
 
     def get_contract_metadata(self, contract_address: HexAddress) -> NftContract:
         """
-        Get the NFT collection metadata associated with the provided parameters.
+        Get the NFT contract metadata associated with the provided parameters.
 
         :param contract_address: The contract address of the NFT.
-        :return: dictionary with contract metadata
+        :return: NftContract
         """
         return self._get_contract_metadata(contract_address)
+
+    def get_contract_metadata_batch(
+        self, contract_addresses: List[HexAddress]
+    ) -> List[NftContract]:
+        """
+        Get the NFT contract metadata for multiple NFT contracts in a single request.
+
+        :param contract_addresses: An array of contract addresses to fetch metadata for.
+        :return: list of NftContracts
+        """
+        response: List[RawNftContract] = api_request(
+            url=f'{self.url}/getContractMetadataBatch',
+            method_name='getContractMetadataBatch',
+            data={'contractAddresses': contract_addresses},
+            config=self.provider.config,
+            rest_method='POST',
+        )
+        return [NftContract.from_raw(raw_contract) for raw_contract in response]
 
     @overload
     def get_nfts_for_contract(
@@ -402,6 +420,7 @@ class AlchemyNFT:
         exclude_filters: Optional[List[NftFilters]] = None,
         include_filters: Optional[List[NftFilters]] = None,
         page_key: Optional[str] = None,
+        page_size: Optional[int] = None,
         order_by: Optional[NftOrdering] = None,
     ) -> ContractsForOwnerResponse:
         """
@@ -415,6 +434,8 @@ class AlchemyNFT:
             NFTs that match one or more of these filters are included in the response.
             May not be used in conjunction with exclude_filter parameter.
         :param page_key: Key for pagination to use to fetch results from the next page if available.
+        :param page_size: Configure the number of NFTs to return in each response.
+            Maximum pages size is 100. Defaults to 100.
         :param order_by: Order in which to return results. By default, results
             are ordered by contract address and token ID in lexicographic order.
         :return: ContractsForOwnerResponse
@@ -429,6 +450,8 @@ class AlchemyNFT:
             params['includeFilters[]'] = include_filters
         if page_key:
             params['pageKey'] = page_key
+        if page_size:
+            params['pageSize'] = page_size
         if order_by:
             params['orderBy'] = order_by
         response: RawContractsForOwnerResponse = api_request(
@@ -601,7 +624,7 @@ class AlchemyNFT:
         )
         result: NftSalesResponse = {
             'nft_sales': [
-                NftSale.from_dict(nft_sale) for nft_sale in response['nftSales']
+                NftSale.from_raw(nft_sale) for nft_sale in response['nftSales']
             ],
             'page_key': response.get('pageKey'),
         }
@@ -831,6 +854,7 @@ class AlchemyNFT:
             result: OwnedNftsResponse = {'owned_nfts': nfts}
         result['total_count'] = response['totalCount']
         result['page_key'] = response.get('pageKey')
+        result['block_hash'] = response.get('blockHash')
         return result
 
     def _get_contract_metadata(

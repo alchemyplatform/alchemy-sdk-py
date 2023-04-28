@@ -13,9 +13,7 @@ from alchemy.nft.types import (
 
 class TestAlchemyNFT(unittest.TestCase):
     def setUp(self):
-        self.alchemy = Alchemy(
-            api_key=os.environ.get('API_KEY', 'lNZ8-y4j8BeV4gyP-I-LVXd-CePee9Xu')
-        )
+        self.alchemy = Alchemy(api_key=os.environ.get('API_KEY', 'demo'))
         self.owner = 'vitalik.eth'
 
     def test_get_nft_metadata(self):
@@ -60,6 +58,16 @@ class TestAlchemyNFT(unittest.TestCase):
             )
         )
 
+    def test_get_contract_metadata_batch(self):
+        contract_addresses = [
+            '0xe785e82358879f061bc3dcac6f0444462d4b5330',
+            '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d',
+        ]
+        resp = self.alchemy.nft.get_contract_metadata_batch(contract_addresses)
+        self.assertEqual(len(resp), 2)
+        self.assertIn(resp[0].address, contract_addresses)
+        self.assertIn(resp[1].address, contract_addresses)
+
     def test_get_contracts_for_owner(self):
         owner = '0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D'
         response = self.alchemy.nft.get_contracts_for_owner(owner)
@@ -79,15 +87,16 @@ class TestAlchemyNFT(unittest.TestCase):
         self.assertIsInstance(contracts[0].contract_deployer, str)
         self.assertIsInstance(contracts[0].deployed_block_number, int)
 
-    def test_get_contracts_for_owner_with_page_key(self):
-        response = self.alchemy.nft.get_contracts_for_owner(self.owner)
+    def test_get_contracts_for_owner_with_page_key_and_size(self):
+        response = self.alchemy.nft.get_contracts_for_owner(self.owner, page_size=4)
         contracts_1 = response.get('contracts')
         page_key = response.get('page_key')
 
         self.assertIsNotNone(page_key)
         self.assertIsInstance(page_key, str)
+        self.assertEqual(len(contracts_1), 4)
         response = self.alchemy.nft.get_contracts_for_owner(
-            self.owner, page_key=page_key
+            self.owner, page_key=page_key, page_size=4
         )
         contracts_2 = response['contracts']
         self.assertNotEqual(contracts_2[0], contracts_1[0])
@@ -118,6 +127,7 @@ class TestAlchemyNFT(unittest.TestCase):
 
         self.assertTrue(owned_nfts)
         self.assertEqual(len(owned_nfts), 30)
+        self.assertIsInstance(response['block_hash'], str)
 
         nft_with_metadata = next(nft for nft in owned_nfts if nft.title)
         self.assertTrue(nft_with_metadata.contract)

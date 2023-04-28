@@ -1,8 +1,8 @@
 from typing import Any, Union, Optional, List
 
 from requests import HTTPError
-from web3.types import RPCEndpoint, RPCResponse
 from web3.providers.base import JSONBaseProvider
+from web3.types import RPCEndpoint, RPCResponse
 
 from alchemy.__version__ import __version__
 from alchemy.config import AlchemyConfig

@@ -123,6 +123,7 @@ class NftContract(BaseNftContract):
 @dataclass
 class ContractForOwner(NftContract):
     total_balance: float = field(default_factory=float)
+    title: str = field(default_factory=str)
     num_distinct_tokens_owned: int = field(default_factory=int)
     is_spam: bool = field(default_factory=bool)
     token_id: str = field(default_factory=str)
@@ -331,7 +332,7 @@ class NftSale(JSONSerializable):
     royalty_fee: Optional[NftSaleFeeData] = None
 
     @classmethod
-    def from_dict(cls, data):
+    def from_raw(cls, data):
         data['taker'] = data['taker'].lower()
         data['marketplace'] = NftSaleMarketplace.return_value(data['marketplace'])
-        return super().from_dict(data)
+        return cls.from_dict(data)

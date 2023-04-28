@@ -89,6 +89,7 @@ class RawNftsResponse(TypedDict):
     ownedNfts: List[RawOwnedNft] | List[RawOwnedBaseNft]
     pageKey: Optional[str]
     totalCount: int
+    blockHash: str
 
 
 class RawNftContract(TypedDict):
@@ -135,6 +136,7 @@ class RawContractForOwner(RawNftContractMetadata):
     address: HexAddress
     totalBalance: int
     numDistinctTokensOwned: int
+    title: str
     isSpam: bool
     tokenId: str
     media: List[RawMedia]

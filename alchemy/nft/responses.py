@@ -18,12 +18,14 @@ class OwnedNftsResponse(TypedDict):
     owned_nfts: List[OwnedNft]
     page_key: Optional[str]
     total_count: int
+    block_hash: str
 
 
 class OwnedBaseNftsResponse(TypedDict):
     owned_nfts: List[OwnedBaseNft]
     page_key: Optional[str]
     total_count: int
+    block_hash: str
 
 
 class NftContractNftsResponse(TypedDict):

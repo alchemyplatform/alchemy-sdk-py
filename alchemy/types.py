@@ -19,6 +19,7 @@ class BaseEnum(str, enum.Enum):
 class Network(BaseEnum):
     ETH_MAINNET = 'eth-mainnet'
     ETH_GOERLI = 'eth-goerli'
+    ETH_SEPOLIA = 'eth-sepolia'
     MATIC_MAINNET = 'polygon-mainnet'
     MATIC_MUMBAI = 'polygon-mumbai'
     OPT_MAINNET = 'opt-mainnet'
@@ -33,3 +34,4 @@ class AlchemyApiType(BaseEnum):
     BASE = 0
     NFT = 1
     WEBHOOK = 2
+    WSS = 3

@@ -112,6 +112,7 @@ under the `alchemy.nft` namespace:
 - `get_nft_metadata()`: Get the NFT metadata for an NFT contract address and tokenId.
 - `get_nft_metada_batch()`: Get the NFT metadata for multiple NFT contract addresses/token id pairs.
 - `get_contract_metadata()`: Get the metadata associated with an NFT contract.
+- `get_contract_metadata_batch()`: Get the metadata associated with multiple NFT contracts in a single request.
 - `get_contracts_for_owner()`: Get all NFT contracts that the provided owner address owns.
 - `get_nfts_for_owner()`: Get NFTs for an owner address.
 - `get_nfts_for_contract()`: Get all NFTs for a contract address.
