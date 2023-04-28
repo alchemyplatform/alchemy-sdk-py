@@ -724,7 +724,8 @@ class AlchemyNFT:
                     'transactionHash': transfer.hash,
                     'blockNumber': transfer.block_num,
                 }
-                if transfer.category == AssetTransfersCategory.ERC1155:
+                if transfer.category == AssetTransfersCategory.ERC1155 and \
+                    transfer.erc1155_metadata:
                     for meta in transfer.erc1155_metadata:
                         token = {
                             'contractAddress': transfer.raw_contract.address,
