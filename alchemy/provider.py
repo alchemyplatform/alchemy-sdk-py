@@ -1,18 +1,17 @@
-from typing import Any, Union, Optional, List
 from __future__ import annotations
 
 import asyncio
 import itertools
 import json
 import threading
-import uuid
 import time
+import uuid
 from typing import Any, Union, Optional, Callable, List
 
 import backoff
 import websockets
 from requests import HTTPError
-from web3.providers.base import JSONBaseProvider
+from web3.providers import JSONBaseProvider
 from web3.types import RPCEndpoint, RPCResponse
 
 from alchemy.__version__ import __version__
