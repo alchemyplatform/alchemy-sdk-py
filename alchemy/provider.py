@@ -1,3 +1,4 @@
+from typing import Any, Union, Optional, List
 from __future__ import annotations
 
 import asyncio
@@ -11,7 +12,7 @@ from typing import Any, Union, Optional, Callable, List
 import backoff
 import websockets
 from requests import HTTPError
-from web3.providers import JSONBaseProvider
+from web3.providers.base import JSONBaseProvider
 from web3.types import RPCEndpoint, RPCResponse
 
 from alchemy.__version__ import __version__
@@ -38,7 +39,7 @@ class AlchemyProvider(JSONBaseProvider):
     def make_request(
         self,
         method: Union[RPCEndpoint, str],
-        params: Any,
+        params: List[Any],
         method_name: Optional[str] = None,
         headers: Optional[dict] = None,
         **options: Any,
@@ -60,7 +61,7 @@ class AlchemyProvider(JSONBaseProvider):
             raise AlchemyError(str(err)) from err
 
         if response.get('error'):
-            raise AlchemyError(response['error'])
+            raise AlchemyError(response.get('error', 'Unknown error'))
         return response
 
 
