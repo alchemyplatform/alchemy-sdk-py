@@ -141,6 +141,8 @@ class AlchemyWebsocketProvider:
         if 'result' in data:
             # Handle subscription confirmation message
             for subscription in self.subscriptions:
+                if '__re' in data['id']:
+                    data['id'] = data['id'].split('__re')[0]
                 if subscription.id == data['id']:
                     subscription._Subscription__physical_id = data['result']
                     break
@@ -172,7 +174,7 @@ class AlchemyWebsocketProvider:
         print('Resubscribing to events...')
         for subscription in self.subscriptions:
             await self._send_subscribe_event(
-                subscription.event_type, subscription.params, subscription.id
+                subscription.event_type, subscription.params, subscription.id, True
             )
 
     def unsubscribe_all(self):
@@ -208,7 +210,11 @@ class AlchemyWebsocketProvider:
         ).result()
         return subscription
 
-    async def _send_subscribe_event(self, event_type, params, virtual_id):
+    async def _send_subscribe_event(
+        self, event_type, params, virtual_id, is_resubscribe=False
+    ):
+        if is_resubscribe:
+            virtual_id = f'{virtual_id}__re{next(self.request_counter)}'
         subscribe_request = json.dumps(
             {
                 "jsonrpc": "2.0",
