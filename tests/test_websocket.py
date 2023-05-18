@@ -129,7 +129,9 @@ class TestAlchemyWebSocket(unittest.TestCase):
             for sub_test_case in subscriptions_test_case:
                 if sub.event_type == sub_test_case["event_type"]:
                     self.assertEqual(sub.id, sub_test_case.get("virtual_id"))
-                    self.assertEqual(sub.physical_id, sub_test_case["physical_id"])
+                    self.assertEqual(
+                        sub._Subscription__physical_id, sub_test_case["physical_id"]
+                    )
 
     def tearDown(self):
         self.loop.call_soon_threadsafe(self.loop.stop)

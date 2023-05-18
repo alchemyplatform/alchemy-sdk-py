@@ -224,7 +224,8 @@ class Alchemy:
         self.core = AlchemyCore(web3)
         self.nft = AlchemyNFT(web3)
         self.transact = AlchemyTransact(web3)
-        self.ws = AlchemyWebSocket(AlchemyWebsocketProvider(self.config))
+        self.ws_provider = AlchemyWebsocketProvider(self.config)
+        self.ws = AlchemyWebSocket(self.ws_provider)
         self.ens = web3.ens
 
     def isConnected(self) -> bool:

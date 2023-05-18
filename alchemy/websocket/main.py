@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Callable
+from typing import Callable
 
 from alchemy.provider import AlchemyWebsocketProvider, Subscription
 from alchemy.websocket.types import EventType
@@ -23,7 +23,6 @@ class AlchemyWebSocket:
         """
         Adds a listener to be triggered for each event.
         """
-        # event = self._resolve_ens_alchemy_event(event_name)
         return self.provider.subscribe(event, listener)
 
     def once(self, event: EventType, listener: Callable):
@@ -31,7 +30,6 @@ class AlchemyWebSocket:
         Adds a listener to be triggered for only the next event,
         after which it will be removed
         """
-        # event = self._resolve_ens_alchemy_event(event_name)
         return self.provider.once(event, listener)
 
     def off_all_events(self):
@@ -39,10 +37,3 @@ class AlchemyWebSocket:
         Unsubscribes from all events.
         """
         return self.provider.unsubscribe_all()
-
-    # @staticmethod
-    # def _resolve_ens_alchemy_event(event_name: str):
-    #     """
-    #     Converts ENS addresses in an Alchemy Event to the underlying resolved address.
-    #     """
-    #     return event_name

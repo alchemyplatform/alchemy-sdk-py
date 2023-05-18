@@ -142,12 +142,12 @@ class AlchemyWebsocketProvider:
             # Handle subscription confirmation message
             for subscription in self.subscriptions:
                 if subscription.id == data['id']:
-                    subscription.physical_id = data['result']
+                    subscription._Subscription__physical_id = data['result']
                     break
         else:
             subscription_id = data.get('params', {}).get('subscription')
             for subscription in self.subscriptions:
-                if subscription.physical_id == subscription_id:
+                if subscription._Subscription__physical_id == subscription_id:
                     if subscription.handlers:
                         for handler in subscription.handlers:
                             handler(data['params']['result'])
@@ -169,6 +169,7 @@ class AlchemyWebsocketProvider:
         """
         Resubscribes to all events after a reconnection.
         """
+        print('Resubscribing to events...')
         for subscription in self.subscriptions:
             await self._send_subscribe_event(
                 subscription.event_type, subscription.params, subscription.id
@@ -225,7 +226,7 @@ class AlchemyWebsocketProvider:
         :param subscription: The Subscription instance to be unsubscribed.
         """
         asyncio.run_coroutine_threadsafe(
-            self._send_unsubscribe_event(subscription.physical_id), self.loop
+            self._send_unsubscribe_event(subscription.__physical_id), self.loop
         )
         self.subscriptions.remove(subscription)
 
@@ -281,7 +282,7 @@ class Subscription:
     It allows adding and removing handlers, as well as unsubscribing from the event.
 
     :var provider: AlchemyWebsocketProvider instance managing the WebSocket connection.
-    :var physical_id: The real identifier of the subscription.
+    :var __physical_id: The real identifier of the subscription.
     :var handlers: Event handler for the subscription.
     :var id: The virtual subscription id which is used by consumer.
     :var params: Params of subscription.
@@ -299,7 +300,7 @@ class Subscription:
     ):
         self.provider = provider
         self.id = uid
-        self.physical_id = physical_id
+        self.__physical_id = physical_id
         self.handlers = handlers
         self.params = params
         self.event_type = event_type
