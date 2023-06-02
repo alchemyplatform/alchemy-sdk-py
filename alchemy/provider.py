@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 import itertools
 import json
+import logging
 import threading
-import time
 import uuid
 from typing import Any, Union, Optional, Callable, List
 
@@ -69,13 +69,24 @@ class AlchemyWebsocketProvider:
     A WebSocket provider for Alchemy that supports subscribing to events.
     """
 
-    def __init__(self, config: AlchemyConfig, heartbeat_interval: Optional[int] = 30):
+    def __init__(
+        self,
+        config: AlchemyConfig,
+        heartbeat_interval: Optional[int] = 30,
+        heartbeat_timeout: Optional[int] = 10,
+    ):
         self.uri = config.get_request_url(AlchemyApiType.WSS)
         self.request_counter = itertools.count()
         self.connection = None
         self.subscriptions: List[Subscription] = []
         self.loop = asyncio.new_event_loop()
         self.heartbeat_interval = heartbeat_interval
+        self.heartbeat_timeout = heartbeat_timeout
+
+        log_format = "%(asctime)s - %(levelname)s - %(message)s"
+        logging.basicConfig(level=logging.INFO, format=log_format)
+        self.logger = logging.getLogger(__name__)
+
         self.connect()
 
     def connect(self):
@@ -85,8 +96,6 @@ class AlchemyWebsocketProvider:
         if not self.connection:
             self.loop.run_until_complete(self._establish_connection())
             threading.Thread(target=self._run_event_loop, daemon=True).start()
-        if self.heartbeat_interval is not None:
-            threading.Thread(target=self._heartbeat, daemon=True).start()
 
     def _run_event_loop(self):
         asyncio.set_event_loop(self.loop)
@@ -100,13 +109,14 @@ class AlchemyWebsocketProvider:
         while True:
             try:
                 message = await self.connection.recv()
-                data = json.loads(message)
-                if 'eth_chainId' in data.get('id', ''):
-                    await self._handle_heartbeat_response(data)
-                else:
-                    await self._handle_message(data)
+                try:
+                    data = json.loads(message)
+                except json.JSONDecodeError as e:
+                    self.logger.error(f'Error decoding JSON: {e}')
+                    continue
+                await self._handle_message(data)
             except websockets.ConnectionClosed:
-                print('Connection closed. Reconnecting...')
+                self.logger.info('Connection closed. Reconnecting...')
                 await self._attempt_reconnection()
 
     async def _attempt_reconnection(self):
@@ -117,7 +127,7 @@ class AlchemyWebsocketProvider:
             await self._establish_connection()
             await self._resubscribe()
         except Exception as e:
-            print(f'Error during reconnection: {e}')
+            self.logger.error(f'Error during reconnection: {e}')
 
     @backoff.on_exception(backoff.expo, Exception, max_tries=10)
     async def _establish_connection(self):
@@ -126,17 +136,21 @@ class AlchemyWebsocketProvider:
         This method uses exponential backoff for retrying connection attempts.
         """
         try:
-            self.connection = await websockets.connect(self.uri)
-            print('Connection successful')
+            self.connection = await websockets.connect(
+                self.uri,
+                ping_interval=self.heartbeat_interval,
+                ping_timeout=self.heartbeat_timeout,
+            )
+            self.logger.info('Connection successful')
         except Exception as e:
-            print(f'Failed to establish connection. Retrying... Error: {e}')
+            self.logger.error(f'Failed to establish connection. Retrying... Error: {e}')
             raise
 
     async def _handle_message(self, data):
         """
         Handles incoming WebSocket messages.
 
-        :param message: The received WebSocket message.
+        :param data: The received WebSocket message.
         """
         if 'result' in data:
             # Handle subscription confirmation message
@@ -155,23 +169,11 @@ class AlchemyWebsocketProvider:
                             handler(data['params']['result'])
                         break
 
-    @staticmethod
-    async def _handle_heartbeat_response(data):
-        """
-        Handles the heartbeat response from the server.
-
-        :param data: The received heartbeat response data.
-        """
-        if 'result' in data:
-            print(f"Heartbeat response received. Result: {data['result']}")
-        else:
-            print(f"Heartbeat response error: {data.get('error')}")
-
     async def _resubscribe(self):
         """
         Resubscribes to all events after a reconnection.
         """
-        print('Resubscribing to events...')
+        self.logger.info('Resubscribing to events...')
         for subscription in self.subscriptions:
             await self._send_subscribe_event(
                 subscription.event_type, subscription.params, subscription.id, True
@@ -261,23 +263,6 @@ class AlchemyWebsocketProvider:
 
         subscription = self.subscribe(event_type, wrapped_handler, **params)
         return subscription
-
-    async def _send_chain_id_request(self):
-        chain_id_request = {
-            "jsonrpc": "2.0",
-            "id": "eth_chainId-" + str(next(self.request_counter)),
-            "method": "eth_chainId",
-            "params": [],
-        }
-        await self.connection.send(json.dumps(chain_id_request))
-
-    def _heartbeat(self):
-        while True:
-            if self.connection:
-                asyncio.run_coroutine_threadsafe(
-                    self._send_chain_id_request(), self.loop
-                )
-            time.sleep(self.heartbeat_interval)
 
 
 class Subscription:
