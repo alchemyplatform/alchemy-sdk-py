@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Any
 
 from dataclass_wizard import JSONSerializable, json_field
-from eth_typing import HexStr
+from eth_typing import HexStr, ChecksumAddress
 
 from alchemy.nft.raw import (
     RawNftContract,
@@ -23,6 +23,7 @@ from alchemy.nft.types import (
     NftSaleMarketplace,
 )
 from alchemy.types import HexAddress
+from eth_utils.address import to_checksum_address
 
 
 class GlobalJSONMeta(JSONSerializable.Meta):
@@ -37,7 +38,7 @@ class Base(JSONSerializable):
             if for_nft:
                 token_type = raw['id']['tokenMetadata']['tokenType']
             else:
-                token_type = raw['contractMetadata']['tokenType']
+                token_type = raw['tokenType']
             return NftTokenType.return_value(token_type)
         except (KeyError, TypeError):
             return NftTokenType.UNKNOWN
@@ -89,28 +90,32 @@ class OpenSeaCollectionMetadata:
 
 @dataclass
 class BaseNftContract(Base):
-    address: HexAddress
+    address: ChecksumAddress
 
 
 @dataclass
 class NftContract(BaseNftContract):
     token_type: NftTokenType
-    opensea: Optional[OpenSeaCollectionMetadata] = json_field('openSea', default=None)
+    opensea: Optional[OpenSeaCollectionMetadata] = json_field(
+        'openSeaMetadata', default=None
+    )
     name: Optional[str] = None
     symbol: Optional[str] = None
     total_supply: Optional[str] = None
-    contract_deployer: Optional[str] = None
+    contract_deployer: Optional[ChecksumAddress] = None
     deployed_block_number: Optional[int] = None
 
     @classmethod
     def parse_raw(cls, raw):
         token_type = cls.parse_token_type(raw, for_nft=False)
-        contract_metadata = raw.get('contractMetadata', {})
-        contract_metadata.pop('tokenType', None)
+        raw.pop('tokenType', None)
+        # contract_metadata = raw.get('contractMetadata', {})
+        # contract_metadata.pop('tokenType', None)
         fields = {
-            'address': raw['address'],
+            # 'address': raw['address'],
             'tokenType': token_type,
-            **contract_metadata,
+            **raw,
+            # **contract_metadata,
         }
         return fields
 
@@ -121,16 +126,35 @@ class NftContract(BaseNftContract):
 
 
 @dataclass
-class ContractForOwner(NftContract):
+class DisplayNftForContract:
+    token_id: str
+    name: Optional[str] = None
+
+
+@dataclass
+class NftImage:
+    cached_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    png_url: Optional[str] = None
+    content_type: Optional[str] = None
+    size: Optional[int] = None
+    original_url: Optional[str] = None
+
+
+@dataclass
+# Todo: check
+class NftContractForOwner(NftContract):
     total_balance: float = field(default_factory=float)
-    title: str = field(default_factory=str)
+    # title: str = field(default_factory=str)
     num_distinct_tokens_owned: int = field(default_factory=int)
     is_spam: bool = field(default_factory=bool)
-    token_id: str = field(default_factory=str)
-    media: List[Media] = field(default_factory=list)
+    # token_id: str = field(default_factory=str)
+    # media: List[Media] = field(default_factory=list)
+    display_nft: DisplayNftForContract = field(default_factory=DisplayNftForContract)
+    image: NftImage = field(default_factory=NftImage)
 
     @classmethod
-    def from_raw(cls, raw: RawContractForOwner) -> ContractForOwner:
+    def from_raw(cls, raw: RawContractForOwner) -> NftContractForOwner:
         token_type = NftTokenType.return_value(raw.get('tokenType', ''))
         raw['tokenType'] = token_type
         return cls.from_dict(raw)
@@ -164,7 +188,7 @@ class Media:
 @dataclass
 class SpamInfo:
     is_spam: bool
-    classifications: List[NftSpamClassification]
+    classifications: Optional[List[NftSpamClassification]] = None
 
 
 @dataclass
@@ -270,7 +294,7 @@ class NftContractOwner(JSONSerializable):
 class NftAttributeRarity(JSONSerializable):
     value: str
     trait_type: str
-    prevalence: int
+    prevalence: float
 
 
 @dataclass

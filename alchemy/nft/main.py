@@ -20,7 +20,7 @@ from alchemy.nft.models import (
     NftContract,
     NftContractOwner,
     NftAttributeRarity,
-    ContractForOwner,
+    NftContractForOwner,
     RefreshContract,
     FloorPrice,
     TransferredNft,
@@ -35,6 +35,7 @@ from alchemy.nft.raw import (
     RawContractsForOwnerResponse,
     RawNftsResponse,
     RawGetNftSalesResponse,
+    RawContractMetadataBatchResponse,
 )
 from alchemy.nft.responses import (
     OwnedNftsResponse,
@@ -46,6 +47,10 @@ from alchemy.nft.responses import (
     ContractsForOwnerResponse,
     TransfersNftResponse,
     NftSalesResponse,
+    IsSpamContractResponse,
+    GetSpamContractsResponse,
+    ComputeRarityResponse,
+    OwnersForNftResponse,
 )
 from alchemy.nft.types import (
     TokenID,
@@ -65,7 +70,7 @@ from alchemy.types import (
     BlockIdentifier,
     SortingOrder,
 )
-from alchemy.utils import is_valid_address, dict_keys_to_camel
+from alchemy.utils import is_valid_address, dict_keys_to_camel, dict_keys_to_snake
 
 
 class AlchemyNFT:
@@ -265,14 +270,16 @@ class AlchemyNFT:
         :param contract_addresses: An array of contract addresses to fetch metadata for.
         :return: list of NftContracts
         """
-        response: List[RawNftContract] = api_request(
+        response: RawContractMetadataBatchResponse = api_request(
             url=f'{self.url}/getContractMetadataBatch',
             method_name='getContractMetadataBatch',
             data={'contractAddresses': contract_addresses},
             config=self.provider.config,
             rest_method='POST',
         )
-        return [NftContract.from_raw(raw_contract) for raw_contract in response]
+        return [
+            NftContract.from_raw(raw_contract) for raw_contract in response['contracts']
+        ]
 
     @overload
     def get_nfts_for_contract(
@@ -348,13 +355,13 @@ class AlchemyNFT:
 
     def get_owners_for_nft(
         self, contract_address: HexAddress, token_id: TokenID
-    ) -> List[Optional[str]]:
+    ) -> OwnersForNftResponse:
         """
         Gets all the owners for a given NFT contract address and token ID.
 
         :param contract_address: The NFT contract address.
         :param token_id: Token id of the NFT.
-        :return: list of owners
+        :return: OwnersForNftResponse
         """
         return self._get_owners_for_nft(contract_address, token_id)
 
@@ -462,7 +469,7 @@ class AlchemyNFT:
         )
         result: ContractsForOwnerResponse = {
             'contracts': [
-                ContractForOwner.from_raw(raw) for raw in response['contracts']
+                NftContractForOwner.from_raw(raw) for raw in response['contracts']
             ],
             'total_count': response['totalCount'],
             'page_key': response.get('pageKey'),
@@ -627,37 +634,39 @@ class AlchemyNFT:
                 NftSale.from_raw(nft_sale) for nft_sale in response['nftSales']
             ],
             'page_key': response.get('pageKey'),
+            'valid_at': dict_keys_to_snake(response.get('validAt')),
         }
         return result
 
-    def get_spam_contracts(self) -> List[str]:
+    def get_spam_contracts(self) -> GetSpamContractsResponse:
         """
         Returns a list of all spam contracts marked by Alchemy.
         For details on how Alchemy marks spam contracts, go to
         https://docs.alchemy.com/alchemy/enhanced-apis/nft-api/nft-api-faq#nft-spam-classification.
-        :return: list of spam contracts
+        :return: GetSpamContractsResponse
         """
-        return api_request(
+        response = api_request(
             url=f'{self.url}/getSpamContracts',
             method_name='getSpamContracts',
-            params={},
             config=self.provider.config,
         )
+        return {'contract_addresses': response['contractAddresses']}
 
-    def is_spam_contract(self, contract_address: HexAddress) -> bool:
+    def is_spam_contract(self, contract_address: HexAddress) -> IsSpamContractResponse:
         """
         Returns whether a contract is marked as spam or not by Alchemy. For more
         information on how we classify spam, go to our NFT API FAQ at
         https://docs.alchemy.com/alchemy/enhanced-apis/nft-api/nft-api-faq#nft-spam-classification.
         :param contract_address: The contract address to check.
-        :return: True/False
+        :return: IsSpamContractResponse
         """
-        return api_request(
+        response = api_request(
             url=f'{self.url}/isSpamContract',
             method_name='isSpamContract',
             params={'contractAddress': contract_address},
             config=self.provider.config,
         )
+        return {'is_spam_contract': response['isSpamContract']}
 
     def refresh_contract(self, contract_address: HexAddress) -> RefreshContract:
         """
@@ -694,7 +703,7 @@ class AlchemyNFT:
 
     def compute_rarity(
         self, contract_address: HexAddress, token_id: TokenID
-    ) -> List[NftAttributeRarity]:
+    ) -> ComputeRarityResponse:
         """
         Get the rarity of each attribute of an NFT.
 
@@ -708,7 +717,11 @@ class AlchemyNFT:
             params={'contractAddress': contract_address, 'tokenId': str(token_id)},
             config=self.provider.config,
         )
-        return [NftAttributeRarity.from_dict(attr) for attr in response]
+        return {
+            'rarities': [
+                NftAttributeRarity.from_dict(attr) for attr in response['rarities']
+            ]
+        }
 
     def _get_nfts_for_transfers(
         self, response: AssetTransfersResponse
@@ -724,8 +737,10 @@ class AlchemyNFT:
                     'transactionHash': transfer.hash,
                     'blockNumber': transfer.block_num,
                 }
-                if transfer.category == AssetTransfersCategory.ERC1155 and \
-                    transfer.erc1155_metadata:
+                if (
+                    transfer.category == AssetTransfersCategory.ERC1155
+                    and transfer.erc1155_metadata
+                ):
                     for meta in transfer.erc1155_metadata:
                         token = {
                             'contractAddress': transfer.raw_contract.address,
@@ -840,7 +855,7 @@ class AlchemyNFT:
             params['includeFilters[]'] = include_filters
 
         response: RawNftsResponse = api_request(
-            url=f'{self.url}/getNFTs',
+            url=f'{self.url}/getNFTsForOwner',
             method_name=src_method,
             params=params,
             config=self.provider.config,
@@ -852,6 +867,7 @@ class AlchemyNFT:
         else:
             nfts = [OwnedNft.from_raw(raw) for raw in response['ownedNfts']]
             result: OwnedNftsResponse = {'owned_nfts': nfts}
+        # todo: migrate
         result['total_count'] = response['totalCount']
         result['page_key'] = response.get('pageKey')
         result['block_hash'] = response.get('blockHash')
@@ -910,14 +926,15 @@ class AlchemyNFT:
         contract_address: HexAddress,
         token_id: TokenID,
         src_method: str = 'getOwnersForNft',
-    ) -> List[Optional[str]]:
+    ) -> OwnersForNftResponse:
         response = api_request(
-            url=f'{self.url}/getOwnersForToken',
+            url=f'{self.url}/getOwnersForNFT',
             method_name=src_method,
             params={'contractAddress': contract_address, 'tokenId': str(token_id)},
             config=self.provider.config,
         )
-        return response.get('owners', [])
+        # todo: migrate
+        return {'owners': response.get('owners'), 'page_key': response.get('pageKey')}
 
     def _get_owners_for_contract(
         self,

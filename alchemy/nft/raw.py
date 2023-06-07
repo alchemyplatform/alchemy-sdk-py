@@ -16,7 +16,9 @@ class RawBaseNft(TypedDict):
     id: RawNftId
 
 
-class RawOwnedBaseNft(RawBaseNft):
+class RawOwnedBaseNft:
+    contractAddress: str
+    tokenId: str
     balance: str
 
 
@@ -43,20 +45,21 @@ class RawNftMetadata(TypedDict, total=False):
 
 
 class RawOpenSeaCollectionMetadata(TypedDict, total=False):
-    floorPrice: float
-    collectionName: str
-    safelistRequestStatus: str
-    imageUrl: str
-    description: str
-    externalUrl: str
-    twitterUsername: str
-    discordUrl: str
+    floorPrice: Optional[float]
+    collectionName: Optional[str]
+    safelistRequestStatus: Optional[str]
+    imageUrl: Optional[str]
+    description: Optional[str]
+    externalUrl: Optional[str]
+    twitterUsername: Optional[str]
+    discordUrl: Optional[str]
     lastIngestedAt: str
 
 
 class RawNftContractMetadata(TypedDict, total=False):
     name: str
     symbol: str
+    # TODO: was removed check
     totalSupply: str
     tokenType: NftTokenType
     openSea: RawOpenSeaCollectionMetadata
@@ -69,32 +72,90 @@ class RawSpamInfo(TypedDict):
     classifications: List[NftSpamClassification]
 
 
-class RawNft(RawBaseNft, total=False):
-    title: Required[str]
-    description: str | List[str]
-    tokenUri: RawTokenUri
-    media: List[RawMedia]
-    metadata: RawNftMetadata
-    timeLastUpdated: Required[str]
+class RawAcquiredAt(TypedDict, total=False):
+    blockTimestamp: str
+    blockNumber: int
+
+
+class RawNftData(TypedDict, total=False):
+    tokenUri: str
+    metadata: str
     error: str
-    contractMetadata: RawNftContractMetadata
-    spamInfo: RawSpamInfo
+
+
+class RawNftImage(TypedDict, total=False):
+    cachedUrl: str
+    thumbnailUrl: str
+    pngUrl: str
+    contentType: str
+    size: int
+    originalUrl: str
+
+
+class RawNftContract(TypedDict, total=False):
+    address: Required[str]
+    tokenType: Required[str]
+    name: str
+    symbol: str
+    totalSupply: str
+    contractDeployer: str
+    deployedBlockNumber: int
+    openSeaMetadata: Required[RawOpenSeaCollectionMetadata]
+
+
+class RawNftContractForNft(RawNftContract):
+    isSpam: Optional[bool]
+    spamClassifications: List[str]
+
+
+class RawNft(TypedDict):
+    # title: Required[str]
+    # media: List[RawMedia]
+    # metadata: RawNftMetadata
+    # error: str
+    # contractMetadata: RawNftContractMetadata
+    # spamInfo: RawSpamInfo
+    contract: RawBaseNftContract
+    tokenId: str
+    tokenType: str
+    name: Optional[str]
+    description: Optional[str]
+    image: RawNftImage
+    raw: RawNftData
+    # tokenUri: RawTokenUri
+    tokenUri: Optional[str]
+    timeLastUpdated: str
+    acquiredAt: Optional[RawAcquiredAt]
 
 
 class RawOwnedNft(RawNft):
     balance: str
 
 
+class RawValidAt(TypedDict):
+    blockNumber: int
+    blockHash: Optional[str]
+    blockTimestamp: Optional[str]
+
+
 class RawNftsResponse(TypedDict):
     ownedNfts: List[RawOwnedNft] | List[RawOwnedBaseNft]
-    pageKey: Optional[str]
     totalCount: int
-    blockHash: str
+    validAt: RawValidAt
+    pageKey: Optional[str]
+    # blockHash: str
 
 
 class RawNftContract(TypedDict):
     address: HexAddress
-    contractMetadata: RawNftContractMetadata
+    name: str
+    symbol: str
+    totalSupply: str
+    tokenType: NftTokenType
+    contractDeployer: str
+    deployedBlockNumber: int
+    openSea: RawOpenSeaCollectionMetadata
+    # contractMetadata: RawNftContractMetadata
 
 
 class RawNftTokenMetadata(TypedDict):
@@ -175,3 +236,8 @@ class RawNftSale(TypedDict):
 class RawGetNftSalesResponse(TypedDict):
     nftSales: List[RawNftSale]
     pageKey: NotRequired[str]
+    validAt: RawValidAt
+
+
+class RawContractMetadataBatchResponse(TypedDict):
+    contracts: List[RawNftContract]
