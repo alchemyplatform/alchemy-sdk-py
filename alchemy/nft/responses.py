@@ -14,6 +14,7 @@ from alchemy.nft.models import (
     TransferredNft,
     NftSale,
     NftAttributeRarity,
+    NftContract,
 )
 
 
@@ -93,3 +94,7 @@ class OwnersForNftResponse(TypedDict):
 
 class NftMetadataBatchResponse(TypedDict):
     nfts: List[Nft]
+
+
+class ContractMetadataBatchResponse(TypedDict):
+    contracts: List[NftContract]

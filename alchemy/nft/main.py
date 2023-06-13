@@ -55,6 +55,7 @@ from alchemy.nft.responses import (
     ComputeRarityResponse,
     OwnersForNftResponse,
     NftMetadataBatchResponse,
+    ContractMetadataBatchResponse,
 )
 from alchemy.nft.types import (
     TokenID,
@@ -267,12 +268,12 @@ class AlchemyNFT:
 
     def get_contract_metadata_batch(
         self, contract_addresses: List[HexAddress]
-    ) -> List[NftContract]:
+    ) -> ContractMetadataBatchResponse:
         """
         Get the NFT contract metadata for multiple NFT contracts in a single request.
 
         :param contract_addresses: An array of contract addresses to fetch metadata for.
-        :return: list of NftContracts
+        :return: ContractMetadataBatchResponse
         """
         response: RawContractMetadataBatchResponse = api_request(
             url=f'{self.url}/getContractMetadataBatch',
@@ -281,9 +282,12 @@ class AlchemyNFT:
             config=self.provider.config,
             rest_method='POST',
         )
-        return [
-            NftContract.from_raw(raw_contract) for raw_contract in response['contracts']
-        ]
+        return {
+            'contracts': [
+                NftContract.from_raw(raw_contract)
+                for raw_contract in response['contracts']
+            ]
+        }
 
     @overload
     def get_nfts_for_contract(
@@ -500,7 +504,7 @@ class AlchemyNFT:
         :param token_type: Filter mints by ERC721 vs ERC1155 contracts.
             If omitted, defaults to all NFTs.
         :param page_key: Optional page key to use for pagination.
-        :return: dict (list of TransferredNft, page_key)
+        :return: TransfersNftResponse
         """
 
         params = {
@@ -538,7 +542,7 @@ class AlchemyNFT:
         :param order: Whether to return results in ascending or descending order
             by block number. Defaults to ascending if omitted.
         :param page_key: Optional page key to use for pagination.
-        :return: dict (list of TransferredNft, page_key)
+        :return: TransfersNftResponse
         """
         response = self.core.get_asset_transfers(
             from_block=from_block,
@@ -680,7 +684,7 @@ class AlchemyNFT:
         process.
 
         :param contract_address: The contract address of the NFT collection.
-        :return: dictionary with result
+        :return: RefreshContract
         """
         response: RawReingestContractResponse = api_request(
             url=f'{self.url}/reingestContract',
@@ -695,7 +699,7 @@ class AlchemyNFT:
         Returns the floor prices of a NFT contract by marketplace.
 
         :param contract_address: The contract address for the NFT collection.
-        :return: FloorPriceResponse
+        :return: FloorPrice
         """
         response = api_request(
             url=f'{self.url}/getFloorPrice',
@@ -713,7 +717,7 @@ class AlchemyNFT:
 
         :param contract_address: Contract address for the NFT collection.
         :param token_id: Token id of the NFT.
-        :return: list of NftAttributeRarity
+        :return: ComputeRarityResponse
         """
         response: RawComputeRarityResponse = api_request(
             url=f'{self.url}/computeRarity',
