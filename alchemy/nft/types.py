@@ -14,6 +14,13 @@ NftSpamClassification = Union[
         'Erc721DishonestTotalSupply',
         'MostlyHoneyPotOwners',
         'OwnedByMostHoneyPots',
+        'LowDistinctOwnersPercent',
+        'HighHoneyPotOwnerPercent',
+        'HighHoneyPotPercent',
+        'HoneyPotsOwnMultipleTokens',
+        'NoSalesActivity',
+        'HighAirdropPercent',
+        'Unknown',
     ],
     str,
 ]
@@ -40,6 +47,8 @@ class NftTokenType(BaseEnum):
 
     ERC721 = 'ERC721'
     ERC1155 = 'ERC1155'
+    NO_SUPPORTED_NFT_STANDARD = 'NO_SUPPORTED_NFT_STANDARD'
+    NOT_A_CONTRACT = 'NOT_A_CONTRACT'
     UNKNOWN = 'UNKNOWN'
 
     @classmethod

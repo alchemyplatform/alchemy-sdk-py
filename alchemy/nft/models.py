@@ -1,19 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 
 from dataclass_wizard import JSONSerializable, json_field
 from eth_typing import HexStr, ChecksumAddress
 
-from alchemy.nft.raw import (
-    RawNftContract,
-    RawOwnedBaseNft,
-    RawOwnedNft,
-    RawBaseNft,
-    RawContractBaseNft,
-    RawContractForOwner,
-)
+from alchemy.nft.raw import RawNftContract, RawNftContractForOwner
 from alchemy.nft.types import (
     NftSpamClassification,
     NftTokenType,
@@ -23,7 +16,6 @@ from alchemy.nft.types import (
     NftSaleMarketplace,
 )
 from alchemy.types import HexAddress
-from eth_utils.address import to_checksum_address
 
 
 class GlobalJSONMeta(JSONSerializable.Meta):
@@ -75,6 +67,7 @@ class Base(JSONSerializable):
 
 @dataclass
 class OpenSeaCollectionMetadata:
+    last_ingested_at: str
     floor_price: Optional[float] = None
     collection_name: Optional[str] = None
     safelist_request_status: Optional[
@@ -85,7 +78,6 @@ class OpenSeaCollectionMetadata:
     external_url: Optional[str] = None
     twitter_username: Optional[str] = None
     discord_url: Optional[str] = None
-    last_ingested_at: Optional[str] = None
 
 
 @dataclass
@@ -96,7 +88,7 @@ class BaseNftContract(Base):
 @dataclass
 class NftContract(BaseNftContract):
     token_type: NftTokenType
-    opensea: Optional[OpenSeaCollectionMetadata] = json_field(
+    opensea_metadata: Optional[OpenSeaCollectionMetadata] = json_field(
         'openSeaMetadata', default=None
     )
     name: Optional[str] = None
@@ -106,33 +98,26 @@ class NftContract(BaseNftContract):
     deployed_block_number: Optional[int] = None
 
     @classmethod
-    def parse_raw(cls, raw):
-        token_type = cls.parse_token_type(raw, for_nft=False)
-        raw.pop('tokenType', None)
-        # contract_metadata = raw.get('contractMetadata', {})
-        # contract_metadata.pop('tokenType', None)
-        fields = {
-            # 'address': raw['address'],
-            'tokenType': token_type,
-            **raw,
-            # **contract_metadata,
-        }
-        return fields
-
-    @classmethod
     def from_raw(cls, raw: RawNftContract) -> NftContract:
-        fields = cls.parse_raw(raw)
-        return cls.from_dict(fields)
+        token_type = cls.parse_token_type(raw, for_nft=False)
+        raw['tokenType'] = token_type
+        return cls.from_dict(raw)
 
 
 @dataclass
-class DisplayNftForContract:
+class NftContractForNft(NftContract):
+    is_spam: Optional[bool] = None  # check
+    spam_classifications: List[NftSpamClassification] = field(default_factory=list)
+
+
+@dataclass
+class DisplayNftForContract(JSONSerializable):
     token_id: str
     name: Optional[str] = None
 
 
 @dataclass
-class NftImage:
+class NftImage(JSONSerializable):
     cached_url: Optional[str] = None
     thumbnail_url: Optional[str] = None
     png_url: Optional[str] = None
@@ -142,19 +127,15 @@ class NftImage:
 
 
 @dataclass
-# Todo: check
 class NftContractForOwner(NftContract):
     total_balance: float = field(default_factory=float)
-    # title: str = field(default_factory=str)
     num_distinct_tokens_owned: int = field(default_factory=int)
     is_spam: bool = field(default_factory=bool)
-    # token_id: str = field(default_factory=str)
-    # media: List[Media] = field(default_factory=list)
     display_nft: DisplayNftForContract = field(default_factory=DisplayNftForContract)
     image: NftImage = field(default_factory=NftImage)
 
     @classmethod
-    def from_raw(cls, raw: RawContractForOwner) -> NftContractForOwner:
+    def from_raw(cls, raw: RawNftContractForOwner) -> NftContractForOwner:
         token_type = NftTokenType.return_value(raw.get('tokenType', ''))
         raw['tokenType'] = token_type
         return cls.from_dict(raw)
@@ -171,117 +152,60 @@ class NftMetadata:
 
 
 @dataclass
-class TokenUri:
-    raw: str
-    gateway: str
+class NftRawMetadata(JSONSerializable):
+    metadata: dict | str = field(
+        default_factory=dict
+    )  # returned string from Alchemy backend
+    token_uri: Optional[str] = None
+    error: Optional[str] = None
 
 
 @dataclass
-class Media:
-    raw: str
-    gateway: str
-    thumbnail: Optional[str] = None
-    format: Optional[str] = None
-    bytes: Optional[int] = None
-
-
-@dataclass
-class SpamInfo:
-    is_spam: bool
-    classifications: Optional[List[NftSpamClassification]] = None
+class AcquiredAt(JSONSerializable):
+    block_timestamp: Optional[str] = None
+    block_number: Optional[int] = None
 
 
 @dataclass
 class Nft(Base):
-    contract: NftContract
+    contract: NftContractForNft
     token_id: str
     token_type: NftTokenType
-    title: str
-    description: str
+    image: NftImage
+    raw: NftRawMetadata
     time_last_updated: str
-    metadata_error: Optional[str] = json_field('error', default=None)
-    raw_metadata: NftMetadata | dict | str = json_field(
-        'metadata', default_factory=dict
-    )
-    token_uri: Optional[TokenUri] = None
-    media: List[Optional[Media]] = field(default_factory=list)
-    spam_info: Optional[SpamInfo] = None
-
-    @classmethod
-    def parse_raw(cls, raw):
-        fields = {
-            'tokenId': raw['id']['tokenId'],
-            'tokenType': cls.parse_token_type(raw),
-            'tokenUri': cls.parse_token_uri(raw),
-            'media': cls.parse_media(raw),
-        }
-
-        contract_metadata = raw.get('contractMetadata', {})
-        contract_metadata.pop('tokenType', None)
-        fields['contract'] = {
-            'address': raw['contract']['address'],
-            'tokenType': fields['tokenType'],
-            **contract_metadata,
-        }
-        raw = cls.dict_reduce(raw, fields)
-        return {**fields, **raw}
-
-    @classmethod
-    def from_dict(cls, data, is_raw=False):
-        if is_raw:
-            data = cls.parse_raw(data)
-        return super().from_dict(data)
+    name: Optional[str] = None
+    description: Optional[str] = None
+    token_uri: Optional[str] = None
+    acquired_at: Optional[AcquiredAt] = None
 
 
 @dataclass
 class OwnedNft(Nft):
-    balance: int = field(default_factory=int)
-
-    @classmethod
-    def from_raw(cls, raw: RawOwnedNft) -> OwnedNft:
-        fields = cls.parse_raw(raw)
-        return cls.from_dict(fields)
+    balance: str = field(default_factory=str)
 
 
 @dataclass
-class BaseNft(Base):
-    contract: BaseNftContract
+class BaseNft(JSONSerializable):
+    contract_address: str
     token_id: str
-    token_type: NftTokenType
 
     @classmethod
-    def parse_raw(cls, raw):
-        fields = {
-            'tokenType': cls.parse_token_type(raw),
-            'tokenId': raw['id']['tokenId'],
-        }
-        raw = cls.dict_reduce(raw, fields)
-        return {**fields, **raw}
-
-    @classmethod
-    def from_raw(
-        cls, raw: RawBaseNft | RawContractBaseNft, contract_address=None
-    ) -> BaseNft:
-        fields = cls.parse_raw(raw)
+    def from_dict(cls, data, contract_address=None):
         if contract_address:
-            fields['contract']['address'] = contract_address
-        return cls.from_dict(fields)
+            data['contract_address'] = contract_address
+        return super().from_dict(data)
 
 
 @dataclass
 class OwnedBaseNft(BaseNft):
     balance: int
 
-    @classmethod
-    def from_raw(cls, raw: RawOwnedBaseNft, contract_address=None) -> OwnedBaseNft:
-        fields = cls.parse_raw(raw)
-        return cls.from_dict(fields)
-
 
 @dataclass
 class NftContractTokenBalance:
     token_id: str
-    balance: int
+    balance: str
 
 
 @dataclass
@@ -303,10 +227,6 @@ class TransferredNft(Nft):
     to: Optional[HexAddress] = None
     transaction_hash: str = field(default='')
     block_number: HexStr = field(default=HexStr(''))
-
-    @classmethod
-    def from_dict(cls, data, is_raw=False):
-        return super().from_dict(data, is_raw=is_raw)
 
 
 @dataclass

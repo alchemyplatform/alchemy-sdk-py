@@ -84,7 +84,7 @@ alchemy.core.get_transaction_receipts(block_hash=block_hash)
 
 # Access the Alchemy NFT API. Gets contract metadata for NFT and gets collection name
 contract = "0x01234567bac6ff94d7e4f0ee23119cf848f93245"
-print(alchemy.nft.get_contract_metadata(contract).opensea.collection_name)
+print(alchemy.nft.get_contract_metadata(contract).opensea_metadata.collection_name)
 ```
 
 The Alchemy class also supports static methods from Web3 object that streamline the development process:
@@ -166,7 +166,7 @@ print(response['total_count'])
 
 # Get all the image urls for all the NFTs an address owns.
 for nft in response['owned_nfts']:
-    print(nft.media)
+    print(nft.image)
 
 # Filter out spam NFTs.
 nfts_without_spam = alchemy.nft.get_nfts_for_owner('vitalik.eth', exclude_filters=[NftFilters.SPAM])
@@ -186,7 +186,7 @@ bayc_address = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'
 response = alchemy.nft.get_nfts_for_contract(bayc_address, omit_metadata=True, page_size=5)
 for nft in response['nfts']:
     owners = alchemy.nft.get_owners_for_nft(
-        contract_address=nft.contract.address, token_id=nft.token_id
+        contract_address=nft.contract_address, token_id=nft.token_id
     )
     print(f"owners: {owners}, tokenId: {nft.token_id}")
 ```

@@ -33,9 +33,12 @@ from alchemy.nft.raw import (
     RawReingestContractResponse,
     RawNft,
     RawContractsForOwnerResponse,
-    RawNftsResponse,
+    RawNftsForOwnerResponse,
     RawGetNftSalesResponse,
     RawContractMetadataBatchResponse,
+    RawNftMetadataBatchResponse,
+    RawOwnersForContractResponse,
+    RawComputeRarityResponse,
 )
 from alchemy.nft.responses import (
     OwnedNftsResponse,
@@ -51,6 +54,7 @@ from alchemy.nft.responses import (
     GetSpamContractsResponse,
     ComputeRarityResponse,
     OwnersForNftResponse,
+    NftMetadataBatchResponse,
 )
 from alchemy.nft.types import (
     TokenID,
@@ -131,7 +135,7 @@ class AlchemyNFT:
         tokens: List[NftMetadataBatchToken],
         token_uri_timeout: Optional[int] = None,
         refresh_cache: bool = False,
-    ) -> List[Nft]:
+    ) -> NftMetadataBatchResponse:
         """
         Gets the NFT metadata for multiple NFT tokens.
 
@@ -142,7 +146,7 @@ class AlchemyNFT:
             live fetch any metadata for cache misses then set this value to 0.
         :param refresh_cache: Whether to refresh the metadata for the given NFT token before returning
             the response. Defaults to false for faster response times.
-        :return: list of Nft
+        :return: NftMetadataBatchResponse
         """
         return self._get_nft_metadata_batch(tokens, token_uri_timeout, refresh_cache)
 
@@ -711,7 +715,7 @@ class AlchemyNFT:
         :param token_id: Token id of the NFT.
         :return: list of NftAttributeRarity
         """
-        response = api_request(
+        response: RawComputeRarityResponse = api_request(
             url=f'{self.url}/computeRarity',
             method_name='computeRarity',
             params={'contractAddress': contract_address, 'tokenId': str(token_id)},
@@ -762,9 +766,9 @@ class AlchemyNFT:
             return {'nfts': [], 'page_key': response['page_key']}
 
         tokens = list(map(itemgetter('token'), metadata_transfers))
-        nfts: List[Nft] = self._get_nft_metadata_batch(tokens)
+        nfts: NftMetadataBatchResponse = self._get_nft_metadata_batch(tokens)
         transferred_nfts = []
-        for nft, transfer in zip(nfts, metadata_transfers):
+        for nft, transfer in zip(nfts['nfts'], metadata_transfers):
             transferred_nfts.append(
                 TransferredNft.from_dict({**nft.to_dict(), **transfer['metadata']})
             )
@@ -811,7 +815,7 @@ class AlchemyNFT:
             params=params,
             config=self.provider.config,
         )
-        return Nft.from_dict(response, is_raw=True)
+        return Nft.from_dict(response)
 
     def _get_nft_metadata_batch(
         self,
@@ -819,7 +823,7 @@ class AlchemyNFT:
         token_uri_timeout: Optional[int] = None,
         refresh_cache: bool = False,
         src_method: str = 'getNftMetadataBatch',
-    ) -> List[Nft]:
+    ) -> NftMetadataBatchResponse:
         tokens_new = []
         for token in tokens:
             tokens_new.append(dict_keys_to_camel(token))
@@ -827,14 +831,14 @@ class AlchemyNFT:
         if token_uri_timeout:
             data['tokenUriTimeoutInMs'] = token_uri_timeout
 
-        response: List[RawNft] = api_request(
+        response: RawNftMetadataBatchResponse = api_request(
             url=f'{self.url}/getNFTMetadataBatch',
             method_name=src_method,
             config=self.provider.config,
             data=data,
             rest_method='POST',
         )
-        return [Nft.from_dict(raw_nft, is_raw=True) for raw_nft in response]
+        return {'nfts': [Nft.from_dict(raw_nft) for raw_nft in response['nfts']]}
 
     def _get_nfts_for_owner(
         self,
@@ -854,7 +858,7 @@ class AlchemyNFT:
         if include_filters:
             params['includeFilters[]'] = include_filters
 
-        response: RawNftsResponse = api_request(
+        response: RawNftsForOwnerResponse = api_request(
             url=f'{self.url}/getNFTsForOwner',
             method_name=src_method,
             params=params,
@@ -862,15 +866,15 @@ class AlchemyNFT:
         )
 
         if omit_metadata:
-            nfts = [OwnedBaseNft.from_raw(raw) for raw in response['ownedNfts']]
+            nfts = [OwnedBaseNft.from_dict(raw) for raw in response['ownedNfts']]
             result: OwnedBaseNftsResponse = {'owned_nfts': nfts}
         else:
-            nfts = [OwnedNft.from_raw(raw) for raw in response['ownedNfts']]
+            nfts = [OwnedNft.from_dict(raw) for raw in response['ownedNfts']]
             result: OwnedNftsResponse = {'owned_nfts': nfts}
-        # todo: migrate
+
         result['total_count'] = response['totalCount']
         result['page_key'] = response.get('pageKey')
-        result['block_hash'] = response.get('blockHash')
+        result['valid_at'] = dict_keys_to_snake(response['validAt'])
         return result
 
     def _get_contract_metadata(
@@ -902,7 +906,7 @@ class AlchemyNFT:
 
         response: RawBaseNftsForContractResponse | RawNftsForContractResponse = (
             api_request(
-                url=f'{self.url}/getNFTsForCollection',
+                url=f'{self.url}/getNFTsForContract',
                 method_name=src_method,
                 params=params,
                 config=self.provider.config,
@@ -911,14 +915,14 @@ class AlchemyNFT:
         if options['omitMetadata']:
             result: NftContractBaseNftsResponse = {
                 'nfts': [
-                    BaseNft.from_raw(raw, contract_address) for raw in response['nfts']
+                    BaseNft.from_dict(raw, contract_address) for raw in response['nfts']
                 ]
             }
         else:
             result: NftContractNftsResponse = {
-                'nfts': [Nft.from_dict(raw, is_raw=True) for raw in response['nfts']]
+                'nfts': [Nft.from_dict(raw) for raw in response['nfts']]
             }
-        result['page_key'] = response.get('nextToken')
+        result['page_key'] = response.get('pageKey')
         return result
 
     def _get_owners_for_nft(
@@ -933,7 +937,6 @@ class AlchemyNFT:
             params={'contractAddress': contract_address, 'tokenId': str(token_id)},
             config=self.provider.config,
         )
-        # todo: migrate
         return {'owners': response.get('owners'), 'page_key': response.get('pageKey')}
 
     def _get_owners_for_contract(
@@ -942,8 +945,8 @@ class AlchemyNFT:
         src_method: str = 'getOwnersForContract',
         **options: Any,
     ) -> OwnersForContractResponse | OwnersForContractWithTokenBalancesResponse:
-        response = api_request(
-            url=f'{self.url}/getOwnersForCollection',
+        response: RawOwnersForContractResponse = api_request(
+            url=f'{self.url}/getOwnersForContract',
             method_name=src_method,
             params={**options, 'contractAddress': contract_address},
             config=self.provider.config,
@@ -951,11 +954,13 @@ class AlchemyNFT:
         if options['withTokenBalances']:
             result: OwnersForContractWithTokenBalancesResponse = {
                 'owners': [
-                    NftContractOwner.from_dict(owner)
-                    for owner in response['ownerAddresses']
+                    NftContractOwner.from_dict(owner) for owner in response['owners']
                 ],
                 'page_key': response.get('pageKey'),
             }
         else:
-            result: OwnersForContractResponse = {'owners': response['ownerAddresses']}
+            result: OwnersForContractResponse = {
+                'owners': response['owners'],
+                'page_key': response.get('pageKey'),
+            }
         return result
