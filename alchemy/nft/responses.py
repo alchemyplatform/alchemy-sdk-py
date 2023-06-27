@@ -2,30 +2,40 @@ from __future__ import annotations
 
 from typing import TypedDict, List, Optional
 
+from eth_typing import ChecksumAddress
+
 from alchemy.nft.models import (
     OwnedNft,
     OwnedBaseNft,
     Nft,
     BaseNft,
     NftContractOwner,
-    ContractForOwner,
+    NftContractForOwner,
     TransferredNft,
     NftSale,
+    NftAttributeRarity,
+    NftContract,
 )
+
+
+class ValidAt(TypedDict, total=False):
+    block_number: int
+    block_hash: str
+    block_timestamp: str
 
 
 class OwnedNftsResponse(TypedDict):
     owned_nfts: List[OwnedNft]
     page_key: Optional[str]
     total_count: int
-    block_hash: str
+    valid_at: ValidAt
 
 
 class OwnedBaseNftsResponse(TypedDict):
     owned_nfts: List[OwnedBaseNft]
     page_key: Optional[str]
     total_count: int
-    block_hash: str
+    valid_at: ValidAt
 
 
 class NftContractNftsResponse(TypedDict):
@@ -40,6 +50,7 @@ class NftContractBaseNftsResponse(TypedDict):
 
 class OwnersForContractResponse(TypedDict):
     owners: List[str]
+    page_key: Optional[str]
 
 
 class OwnersForContractWithTokenBalancesResponse(TypedDict):
@@ -48,7 +59,7 @@ class OwnersForContractWithTokenBalancesResponse(TypedDict):
 
 
 class ContractsForOwnerResponse(TypedDict):
-    contracts: List[ContractForOwner]
+    contracts: List[NftContractForOwner]
     page_key: Optional[str]
     total_count: int
 
@@ -60,4 +71,30 @@ class TransfersNftResponse(TypedDict):
 
 class NftSalesResponse(TypedDict):
     nft_sales: List[NftSale]
+    valid_at: ValidAt
     page_key: Optional[str]
+
+
+class IsSpamContractResponse(TypedDict):
+    is_spam_contract: bool
+
+
+class GetSpamContractsResponse(TypedDict):
+    contract_addresses: List[ChecksumAddress]
+
+
+class ComputeRarityResponse(TypedDict):
+    rarities: List[NftAttributeRarity]
+
+
+class OwnersForNftResponse(TypedDict):
+    owners: List[Optional[ChecksumAddress]]
+    page_key: Optional[str]
+
+
+class NftMetadataBatchResponse(TypedDict):
+    nfts: List[Nft]
+
+
+class ContractMetadataBatchResponse(TypedDict):
+    contracts: List[NftContract]

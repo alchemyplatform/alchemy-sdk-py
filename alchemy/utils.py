@@ -13,23 +13,37 @@ def is_valid_address(address):
         return False
 
 
-def dict_keys_to_camel(data):
-    temp = {}
+def convert_dict_keys(data, convert_func):
+    new_data = {}
     for key, value in data.items():
-        new_item = to_camel_case(key)
-        temp[new_item] = value
-        new_list = []
-        if type(value) is list:
-            for ele in value:
-                if type(ele) is dict:
-                    new_list.append(dict_keys_to_camel(ele))
-            if len(new_list) != 0:
-                temp[new_item] = new_list
-        if type(value) is dict:
-            temp[new_item] = dict_keys_to_camel(value)
-    return temp
+        new_key = convert_func(key)
+        if isinstance(value, dict):
+            new_data[new_key] = convert_dict_keys(value, convert_func)
+        elif isinstance(value, list):
+            new_list = [
+                convert_dict_keys(item, convert_func)
+                if isinstance(item, dict)
+                else item
+                for item in value
+            ]
+            new_data[new_key] = new_list
+        else:
+            new_data[new_key] = value
+    return new_data
 
 
 def to_camel_case(snake_str):
     components = snake_str.split('_')
     return components[0] + ''.join(x.title() for x in components[1:])
+
+
+def to_snake_case(camel_str):
+    return ''.join('_' + i.lower() if i.isupper() else i for i in camel_str).lstrip('_')
+
+
+def dict_keys_to_camel(data):
+    return convert_dict_keys(data, to_camel_case)
+
+
+def dict_keys_to_snake(data):
+    return convert_dict_keys(data, to_snake_case)
