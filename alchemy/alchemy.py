@@ -11,8 +11,9 @@ from alchemy.config import AlchemyConfig
 from alchemy.core import AlchemyCore
 from alchemy.nft import AlchemyNFT
 from alchemy.transact import AlchemyTransact
-from alchemy.provider import AlchemyProvider
+from alchemy.provider import AlchemyProvider, AlchemyWebsocketProvider
 from alchemy.types import Network
+from alchemy.websocket import AlchemyWebSocket
 
 
 class Alchemy:
@@ -223,6 +224,8 @@ class Alchemy:
         self.core = AlchemyCore(web3)
         self.nft = AlchemyNFT(web3)
         self.transact = AlchemyTransact(web3)
+        self.ws_provider = AlchemyWebsocketProvider(self.config)
+        self.ws = AlchemyWebSocket(self.ws_provider)
         self.ens = web3.ens
 
     def isConnected(self) -> bool:
