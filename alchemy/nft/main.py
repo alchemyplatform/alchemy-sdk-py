@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from operator import itemgetter
-from typing import Optional, List, overload, Literal, Any, cast
+from typing import Optional, List, overload, Literal, Any, cast, Dict
 
 from web3 import Web3
 from web3.types import ENS
@@ -25,6 +25,7 @@ from alchemy.nft.models import (
     FloorPrice,
     TransferredNft,
     NftSale,
+    NftAttributes,
 )
 from alchemy.nft.raw import (
     RawNftContract,
@@ -39,6 +40,7 @@ from alchemy.nft.raw import (
     RawNftMetadataBatchResponse,
     RawOwnersForContractResponse,
     RawComputeRarityResponse,
+    RawSearchContractMetadataResponse,
 )
 from alchemy.nft.responses import (
     OwnedNftsResponse,
@@ -56,6 +58,7 @@ from alchemy.nft.responses import (
     OwnersForNftResponse,
     NftMetadataBatchResponse,
     ContractMetadataBatchResponse,
+    SearchContractMetadataResponse,
 )
 from alchemy.nft.types import (
     TokenID,
@@ -75,7 +78,12 @@ from alchemy.types import (
     BlockIdentifier,
     SortingOrder,
 )
-from alchemy.utils import is_valid_address, dict_keys_to_camel, dict_keys_to_snake
+from alchemy.utils import (
+    is_valid_address,
+    dict_keys_to_camel,
+    dict_keys_to_snake,
+    get_checksum_address,
+)
 
 
 class AlchemyNFT:
@@ -731,6 +739,93 @@ class AlchemyNFT:
             ]
         }
 
+    def refresh_nft_metadata(
+        self, contract_address: HexAddress, token_id: TokenID
+    ) -> bool:
+        """
+        Refreshes the cached metadata for a provided NFT contract address and token id.
+        Returns a boolean value indicating whether the metadata was refreshed.
+        This method is useful when you want to refresh the metadata for an NFT
+        that has been updated since the last time it was fetched.
+
+        :param contract_address: The contract address of the NFT collection.
+        :param token_id: The token id of the NFT.
+        :return: bool
+        """
+        first = self._get_nft_metadata(
+            contract_address=contract_address,
+            token_id=token_id,
+            src_method='refreshNftMetadata',
+            refresh_cache=False,
+            token_type=None,
+            token_uri_timeout=None,
+        )
+        second = self._get_nft_metadata(
+            contract_address=contract_address,
+            token_id=token_id,
+            src_method='refreshNftMetadata',
+            refresh_cache=True,
+            token_type=None,
+            token_uri_timeout=None,
+        )
+        return first.time_last_updated != second.time_last_updated
+
+    def search_contract_metadata(self, query) -> SearchContractMetadataResponse:
+        """
+        Search for a keyword across the metadata of all ERC-721 and ERC-1155 smart contracts.
+
+        :param query: The search query.
+        :return: SearchContractMetadataResponse
+        """
+        response: RawSearchContractMetadataResponse = api_request(
+            url=f'{self.url}/searchContractMetadata',
+            method_name='searchContractMetadata',
+            params={'query': query},
+            config=self.provider.config,
+        )
+        return {
+            'contracts': [
+                NftContract.from_dict(contract) for contract in response['contracts']
+            ]
+        }
+
+    def summarize_nft_attributes(self, contract_address: HexAddress) -> NftAttributes:
+        """
+        Get a summary of attribute prevalence for an NFT collection.
+
+        :param contract_address: The contract address of the NFT collection.
+        :return: NftAttributes
+        """
+        response = api_request(
+            url=f'{self.url}/summarizeNFTAttributes',
+            method_name='summarizeNFTAttributes',
+            params={'contractAddress': contract_address},
+            config=self.provider.config,
+        )
+        return NftAttributes.from_dict(response)
+
+    def verify_nft_ownership(
+        self, owner: HexAddress | ENS, contract_addresses: List[HexAddress]
+    ) -> Dict[HexAddress, bool]:
+        if not is_valid_address(owner):
+            raise AlchemyError('Owner address or ENS is not valid')
+
+        if len(contract_addresses) == 0:
+            raise ValueError('Must provide at least one contract address')
+
+        response = self._get_nfts_for_owner(
+            owner,
+            contractAddresses=contract_addresses,
+            omitMetadata=True,
+            src_method='verifyNftOwnership',
+        )
+
+        result = {get_checksum_address(addr): False for addr in contract_addresses}
+        for nft in response['owned_nfts']:
+            if nft.contract_address in result:
+                result[nft.contract_address] = True
+        return result
+
     def _get_nfts_for_transfers(
         self, response: AssetTransfersResponse
     ) -> TransfersNftResponse:
@@ -853,9 +948,9 @@ class AlchemyNFT:
         if not is_valid_address(owner):
             raise AlchemyError('Owner address or ENS is not valid')
 
-        omit_metadata = options.pop('omitMetadata')
-        exclude_filters = options.pop('excludeFilters')
-        include_filters = options.pop('includeFilters')
+        omit_metadata = options.pop('omitMetadata', None)
+        exclude_filters = options.pop('excludeFilters', None)
+        include_filters = options.pop('includeFilters', None)
         params = {'owner': owner, 'withMetadata': (not omit_metadata), **options}
         if exclude_filters:
             params['excludeFilters[]'] = exclude_filters

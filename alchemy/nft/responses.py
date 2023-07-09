@@ -98,3 +98,7 @@ class NftMetadataBatchResponse(TypedDict):
 
 class ContractMetadataBatchResponse(TypedDict):
     contracts: List[NftContract]
+
+
+class SearchContractMetadataResponse(TypedDict):
+    contracts: List[NftContract]
