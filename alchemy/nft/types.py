@@ -55,7 +55,7 @@ class NftTokenType(BaseEnum):
     def return_value(cls, value):
         try:
             return cls(value.upper())
-        except ValueError:
+        except (ValueError, AttributeError):
             return cls.UNKNOWN
 
 
@@ -125,7 +125,7 @@ class NftSaleMarketplace(BaseEnum):
     def return_value(cls, value):
         try:
             return cls(value.lower())
-        except ValueError:
+        except (ValueError, AttributeError):
             return cls.UNKNOWN
 
 

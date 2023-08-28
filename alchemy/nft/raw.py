@@ -202,3 +202,7 @@ class RawOwnerAddress(TypedDict):
 class RawOwnersForContractResponse(TypedDict):
     owners: List[str | RawOwnerAddress]
     pageKey: Optional[str]
+
+
+class RawSearchContractMetadataResponse(TypedDict):
+    contracts: List[RawNftContract]

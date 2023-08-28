@@ -47,3 +47,9 @@ def dict_keys_to_camel(data):
 
 def dict_keys_to_snake(data):
     return convert_dict_keys(data, to_snake_case)
+
+
+def get_checksum_address(address):
+    if not is_not_address_string(address):
+        address = to_checksum_address(address)
+    return address

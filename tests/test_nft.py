@@ -424,3 +424,49 @@ class TestAlchemyNFT(unittest.TestCase):
         self.assertIsNotNone(resp['rarities'][0].prevalence)
         self.assertIsNotNone(resp['rarities'][0].trait_type)
         self.assertIsNotNone(resp['rarities'][0].value)
+
+    def test_refresh_nft_metadata(self):
+        contract_address = '0x0510745d2ca36729bed35c818527c4485912d99e'
+        token_id = '404'
+        res_1 = self.alchemy.nft.refresh_nft_metadata(contract_address, token_id)
+        self.assertTrue(res_1)
+        nft = self.alchemy.nft.get_nft_metadata(contract_address, token_id)
+        res_2 = self.alchemy.nft.refresh_nft_metadata(
+            nft.contract.address, nft.token_id
+        )
+        self.assertFalse(res_2)
+
+    def test_search_contract_metadata(self):
+        query = 'meta alchemy'
+        response = self.alchemy.nft.search_contract_metadata(query)
+        self.assertIsNotNone(response)
+        self.assertTrue(len(response['contracts']) > 0)
+        self.assertIsNotNone(response['contracts'][0].address)
+        self.assertIsInstance(response['contracts'][0].address, str)
+        self.assertIsNotNone(response['contracts'][0].token_type)
+
+    def test_summarize_nft_attributes(self):
+        contract_address = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'
+        response = self.alchemy.nft.summarize_nft_attributes(contract_address)
+        self.assertIsNotNone(response)
+        self.assertIsNotNone(response.contract_address)
+        self.assertEqual(response.contract_address, contract_address)
+        self.assertIsNotNone(response.total_supply)
+        self.assertIsInstance(response.total_supply, str)
+        self.assertIsNotNone(response.summary)
+
+    def test_verify_nft_ownership(self):
+        owner = '0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D'
+        contract_address = '0x01234567bac6ff94d7e4f0ee23119cf848f93245'
+        contract_address_2 = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'
+        response = self.alchemy.nft.verify_nft_ownership(
+            owner, [contract_address, contract_address_2]
+        )
+        contract_address = to_checksum_address(contract_address)
+        contract_address_2 = to_checksum_address(contract_address_2)
+        self.assertIn(contract_address, response)
+        self.assertIn(contract_address_2, response)
+        self.assertIsInstance(response[contract_address], bool)
+        self.assertIsInstance(response[contract_address_2], bool)
+        self.assertTrue(response[contract_address])
+        self.assertFalse(response[contract_address_2])

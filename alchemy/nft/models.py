@@ -280,3 +280,10 @@ class NftSale(JSONSerializable):
         data['taker'] = data['taker'].lower()
         data['marketplace'] = NftSaleMarketplace.return_value(data['marketplace'])
         return cls.from_dict(data)
+
+
+@dataclass
+class NftAttributes(JSONSerializable):
+    contract_address: str
+    total_supply: str
+    summary: Dict[str, Dict[str, int]]
