@@ -58,7 +58,11 @@ def api_request(
     try:
         result = do_request(options.get('rest_method', 'GET'))
     except HTTPError as err:
-        raise AlchemyError(f'Response: {err.response.content}') from err
+        try:
+            message = err.response.json()['error']['message']
+        except Exception:
+            raise AlchemyError(err.response.content) from err
+        raise AlchemyError(message) from err
     return result
 
 
