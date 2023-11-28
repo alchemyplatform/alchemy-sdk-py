@@ -125,7 +125,7 @@ class RawReingestContractResponse(TypedDict):
 class RawNftAttributeRarity(TypedDict):
     value: str
     trait_type: str
-    prevalence: int
+    prevalence: float
 
 
 class RawComputeRarityResponse(TypedDict):

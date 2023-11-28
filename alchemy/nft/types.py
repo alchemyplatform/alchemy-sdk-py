@@ -119,6 +119,7 @@ class NftSaleMarketplace(BaseEnum):
     X2Y2 = 'x2y2'
     WYVERN = 'wyvern'
     CRYPTOPUNKS = 'cryptopunks'
+    BLUR = 'blur'
     UNKNOWN = 'unknown'
 
     @classmethod

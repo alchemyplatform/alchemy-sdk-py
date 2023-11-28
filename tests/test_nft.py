@@ -72,11 +72,12 @@ class TestAlchemyNFT(unittest.TestCase):
             '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d',
         ]
         resp = self.alchemy.nft.get_contract_metadata_batch(contract_addresses)
+        contracts = resp['contracts']
         for i, address in enumerate(contract_addresses):
             contract_addresses[i] = to_checksum_address(address)
-        self.assertEqual(len(resp), 2)
-        self.assertIn(resp[0].address, contract_addresses)
-        self.assertIn(resp[1].address, contract_addresses)
+        self.assertEqual(len(contracts), 2)
+        self.assertIn(contracts[0].address, contract_addresses)
+        self.assertIn(contracts[1].address, contract_addresses)
 
     def test_get_contracts_for_owner(self):
         owner = '0x65d25E3F2696B73b850daA07Dd1E267dCfa67F2D'

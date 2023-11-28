@@ -18,24 +18,30 @@ from alchemy.nft.models import (
 )
 
 
-class ValidAt(TypedDict, total=False):
+class NftSaleValidAt(TypedDict):
     block_number: int
+    block_hash: Optional[str]
+    block_timestamp: Optional[str]
+
+
+class OwnedNftsValidAt(TypedDict):
+    block_number: Optional[int]
     block_hash: str
-    block_timestamp: str
+    block_timestamp: Optional[str]
 
 
 class OwnedNftsResponse(TypedDict):
     owned_nfts: List[OwnedNft]
     page_key: Optional[str]
     total_count: int
-    valid_at: ValidAt
+    valid_at: OwnedNftsValidAt
 
 
 class OwnedBaseNftsResponse(TypedDict):
     owned_nfts: List[OwnedBaseNft]
     page_key: Optional[str]
     total_count: int
-    valid_at: ValidAt
+    valid_at: OwnedNftsValidAt
 
 
 class NftContractNftsResponse(TypedDict):
@@ -71,7 +77,7 @@ class TransfersNftResponse(TypedDict):
 
 class NftSalesResponse(TypedDict):
     nft_sales: List[NftSale]
-    valid_at: ValidAt
+    valid_at: NftSaleValidAt
     page_key: Optional[str]
 
 
