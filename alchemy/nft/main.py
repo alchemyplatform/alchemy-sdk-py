@@ -702,17 +702,36 @@ class AlchemyNFT:
         )
         return RefreshContract.from_dict(response)
 
-    def get_floor_price(self, contract_address: HexAddress) -> FloorPrice:
+    def get_floor_price(
+        self,
+        contract_address: Optional[HexAddress] = None,
+        collection_slug: Optional[str] = None,
+    ) -> FloorPrice:
         """
         Returns the floor prices of a NFT contract by marketplace.
+        Either contract_address or collection_slug should be provided.
 
         :param contract_address: The contract address for the NFT collection.
+        :param collection_slug: The slug for the NFT collection.
         :return: FloorPrice
         """
+        if (contract_address is None and collection_slug is None) or (
+            contract_address is not None and collection_slug is not None
+        ):
+            raise AlchemyError(
+                'You must specify either contract_address or collection_slug, but not both.'
+            )
+
+        params = (
+            {'contractAddress': contract_address}
+            if contract_address
+            else {'collectionSlug': collection_slug}
+        )
+
         response = api_request(
             url=f'{self.url}/getFloorPrice',
             method_name='getFloorPrice',
-            params={'contractAddress': contract_address},
+            params=params,
             config=self.provider.config,
         )
         return FloorPrice.from_dict(response)
