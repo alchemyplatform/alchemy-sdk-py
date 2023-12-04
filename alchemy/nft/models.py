@@ -70,10 +70,12 @@ class OpenSeaCollectionMetadata:
     last_ingested_at: str
     floor_price: Optional[float] = None
     collection_name: Optional[str] = None
+    collection_slug: Optional[str] = None
     safelist_request_status: Optional[
         OpenSeaSafelistRequestStatus | str
     ] = None  # check statuses
     image_url: Optional[str] = None
+    banner_image_url: Optional[str] = None
     description: Optional[str] = None
     external_url: Optional[str] = None
     twitter_username: Optional[str] = None
@@ -106,7 +108,7 @@ class NftContract(BaseNftContract):
 
 @dataclass
 class NftContractForNft(NftContract):
-    is_spam: Optional[bool] = None  # check
+    is_spam: Optional[bool] = None
     spam_classifications: List[NftSpamClassification] = field(default_factory=list)
 
 
@@ -153,9 +155,7 @@ class NftMetadata:
 
 @dataclass
 class NftRawMetadata(JSONSerializable):
-    metadata: dict | str = field(
-        default_factory=dict
-    )  # returned string from Alchemy backend
+    metadata: Dict[str, Any]
     token_uri: Optional[str] = None
     error: Optional[str] = None
 
@@ -164,6 +164,22 @@ class NftRawMetadata(JSONSerializable):
 class AcquiredAt(JSONSerializable):
     block_timestamp: Optional[str] = None
     block_number: Optional[int] = None
+
+
+@dataclass
+class BaseNftCollection(Base):
+    name: str
+    slug: Optional[str] = None
+    external_url: Optional[str] = None
+    banner_image_url: Optional[str] = None
+
+
+@dataclass
+class NftMint(Base):
+    mint_address: Optional[str] = None
+    block_number: Optional[int] = None
+    timestamp: Optional[str] = None
+    transaction_hash: Optional[str] = None
 
 
 @dataclass
@@ -178,6 +194,8 @@ class Nft(Base):
     description: Optional[str] = None
     token_uri: Optional[str] = None
     acquired_at: Optional[AcquiredAt] = None
+    collection: Optional[BaseNftCollection] = None
+    mint: Optional[NftMint] = None
 
 
 @dataclass
@@ -253,14 +271,16 @@ class FloorPrice(JSONSerializable):
 
 @dataclass
 class NftSaleFeeData(JSONSerializable):
-    amount: str
-    symbol: str
-    decimals: int
+    amount: Optional[str] = None
+    token_address: Optional[str] = None
+    symbol: Optional[str] = None
+    decimals: Optional[int] = None
 
 
 @dataclass
 class NftSale(JSONSerializable):
     marketplace: NftSaleMarketplace
+    marketplace_address: str
     contract_address: str
     token_id: str
     quantity: str
@@ -268,12 +288,12 @@ class NftSale(JSONSerializable):
     seller_address: str
     taker: NftSaleTakerType
     seller_fee: NftSaleFeeData
+    protocol_fee: NftSaleFeeData
+    royalty_fee: NftSaleFeeData
     block_number: int
     log_index: int
     bundle_index: int
     transaction_hash: str
-    protocol_fee: Optional[NftSaleFeeData] = None
-    royalty_fee: Optional[NftSaleFeeData] = None
 
     @classmethod
     def from_raw(cls, data):
