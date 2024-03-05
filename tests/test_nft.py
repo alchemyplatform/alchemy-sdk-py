@@ -471,3 +471,17 @@ class TestAlchemyNFT(unittest.TestCase):
         self.assertIsInstance(response[contract_address_2], bool)
         self.assertTrue(response[contract_address])
         self.assertFalse(response[contract_address_2])
+
+    def test_get_nfts_for_contract(self):
+        contract_address = '0x01234567bac6ff94d7e4f0ee23119cf848f93245'
+        first_page = self.alchemy.nft.get_nfts_for_contract(contract_address)
+        self.assertIsNotNone(first_page)
+        next_page = self.alchemy.nft.get_nfts_for_contract(
+            contract_address, page_key=first_page['page_key']
+        )
+        self.assertNotEqual(first_page['nfts'][0], next_page['nfts'][0])
+
+        with_limit = self.alchemy.nft.get_nfts_for_contract(
+            contract_address, page_size=10
+        )
+        self.assertEqual(len(with_limit['nfts']), 10)

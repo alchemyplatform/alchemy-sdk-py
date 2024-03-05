@@ -58,6 +58,13 @@ class NftTokenType(BaseEnum):
         except (ValueError, AttributeError):
             return cls.UNKNOWN
 
+    @classmethod
+    def is_valid_type(cls, value):
+        try:
+            return True if cls(value.upper()) in [cls.ERC721, cls.ERC1155] else False
+        except (ValueError, AttributeError):
+            return False
+
 
 class NftFilters(BaseEnum):
     """

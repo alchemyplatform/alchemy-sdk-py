@@ -114,7 +114,7 @@ class NftContractForNft(NftContract):
 
 @dataclass
 class DisplayNftForContract(JSONSerializable):
-    token_id: str
+    token_id: Optional[str] = None
     name: Optional[str] = None
 
 
@@ -130,8 +130,8 @@ class NftImage(JSONSerializable):
 
 @dataclass
 class NftContractForOwner(NftContract):
-    total_balance: float = field(default_factory=float)
-    num_distinct_tokens_owned: int = field(default_factory=int)
+    total_balance: str = field(default_factory=str)
+    num_distinct_tokens_owned: str = field(default_factory=str)
     is_spam: bool = field(default_factory=bool)
     display_nft: DisplayNftForContract = field(default_factory=DisplayNftForContract)
     image: NftImage = field(default_factory=NftImage)

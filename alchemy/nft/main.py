@@ -905,7 +905,7 @@ class AlchemyNFT:
         if token_uri_timeout is not None:
             params['tokenUriTimeoutInMs'] = token_uri_timeout
 
-        if NftTokenType.return_value(token_type) is not NftTokenType.UNKNOWN:
+        if NftTokenType.is_valid_type(token_type):
             params['tokenType'] = token_type
 
         response: RawNft = api_request(
